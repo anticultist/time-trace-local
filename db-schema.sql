@@ -10,6 +10,16 @@ CREATE TABLE properties (
     deleted BOOLEAN DEFAULT FALSE
 );
 
+-- Source systems table
+CREATE TABLE source_systems (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    custom_fields TEXT, -- JSON field for source-specific data (e.g., Jira URL, API endpoints)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted BOOLEAN DEFAULT FALSE
+);
+
 -- Clients/Jobs table
 CREATE TABLE clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,7 +87,7 @@ CREATE TABLE bookable_elements (
 -- Events table (raw activity data)
 CREATE TABLE events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    source_system TEXT NOT NULL, -- 'pc_login', 'syslog', 'jira', 'git', 'filesystem', etc.
+    source_system_id INTEGER NOT NULL,
     start_time DATETIME NOT NULL,
     end_time DATETIME, -- Optional, may be null for instantaneous events
     duration_seconds INTEGER, -- Calculated or provided duration
@@ -89,6 +99,7 @@ CREATE TABLE events (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (source_system_id) REFERENCES source_systems(id),
     FOREIGN KEY (work_type_id) REFERENCES work_types(id)
 );
 
@@ -138,7 +149,7 @@ CREATE TABLE mapping_rules (
 
 -- Indexes for performance
 CREATE INDEX idx_events_start_time ON events(start_time);
-CREATE INDEX idx_events_source_system ON events(source_system);
+CREATE INDEX idx_events_source_system_id ON events(source_system_id);
 CREATE INDEX idx_events_deleted ON events(deleted);
 CREATE INDEX idx_event_bookable_mappings_event_id ON event_bookable_mappings(event_id);
 CREATE INDEX idx_event_bookable_mappings_bookable_element_id ON event_bookable_mappings(bookable_element_id);
@@ -147,8 +158,17 @@ CREATE INDEX idx_event_tags_tag_id ON event_tags(tag_id);
 CREATE INDEX idx_bookable_elements_project_id ON bookable_elements(project_id);
 CREATE INDEX idx_bookable_elements_client_id ON bookable_elements(client_id);
 CREATE INDEX idx_projects_client_id ON projects(client_id);
+CREATE INDEX idx_source_systems_deleted ON source_systems(deleted);
 
 -- Triggers to update updated_at timestamps
+CREATE TRIGGER update_source_systems_updated_at 
+    AFTER UPDATE ON source_systems
+    FOR EACH ROW
+    WHEN NEW.updated_at = OLD.updated_at
+BEGIN
+    UPDATE source_systems SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+END;
+
 CREATE TRIGGER update_clients_updated_at 
     AFTER UPDATE ON clients
     FOR EACH ROW
@@ -199,8 +219,17 @@ END;
 
 -- Sample initial data
 INSERT INTO properties (name, string_value) VALUES ('schema_version', '1.0.0');
+
 INSERT INTO work_types (name, description, is_billable) VALUES 
     ('Regular', 'Regular work hours', TRUE),
     ('Overtime', 'Overtime work', TRUE),
     ('Break', 'Break time', FALSE),
     ('Meeting', 'Meeting time', TRUE);
+
+INSERT INTO source_systems (name, custom_fields) VALUES 
+    ('pc_login', '{"description": "PC login/logout events"}'),
+    ('syslog', '{"description": "System log events"}'),
+    ('jira', '{"description": "Jira ticket events", "base_url": ""}'),
+    ('git', '{"description": "Git repository events"}'),
+    ('filesystem', '{"description": "File system activity"}'),
+    ('manual', '{"description": "Manually entered events"}');
