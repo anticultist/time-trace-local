@@ -1,0 +1,72 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Extension",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "build"],
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "isBackground": false
+    },
+    {
+      "label": "Watch Extension",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "dev"],
+      "group": "build",
+      "problemMatcher": ["$tsc-watch"],
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    },
+    {
+      "label": "Test All Packages",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "test"],
+      "group": "test",
+      "problemMatcher": [],
+      "isBackground": false
+    },
+    {
+      "label": "Package Extension",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "package"],
+      "group": "build",
+      "problemMatcher": [],
+      "isBackground": false,
+      "dependsOn": "Build Extension"
+    },
+    {
+      "label": "Install Dependencies",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["install"],
+      "group": "build",
+      "problemMatcher": [],
+      "isBackground": false
+    },
+    {
+      "label": "Lint All",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "lint"],
+      "group": "test",
+      "problemMatcher": ["$eslint-stylish"],
+      "isBackground": false
+    },
+    {
+      "label": "Format Code",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["run", "format"],
+      "group": "test",
+      "problemMatcher": [],
+      "isBackground": false
+    }
+  ]
+}

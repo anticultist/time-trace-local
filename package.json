@@ -1,0 +1,39 @@
+{
+  "name": "time-trace-local",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm run -r build",
+    "dev": "pnpm run -r dev",
+    "test": "pnpm run -r test",
+    "test:run": "pnpm run -r test:run",
+    "lint": "pnpm run -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "type-check": "pnpm run -r type-check",
+    "clean": "pnpm run -r clean",
+    "prepackage": "pnpm run build",
+    "package": "cd packages/extension && pnpm run package",
+    "publish-extension": "cd packages/extension && pnpm run publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vitest": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
