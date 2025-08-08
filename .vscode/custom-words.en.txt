@@ -1,1 +1,4 @@
 AUTOINCREMENT
+esbuild
+rimraf
+yarnrc
