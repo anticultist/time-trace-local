@@ -6,4 +6,9 @@
 - https://code.visualstudio.com/api/extension-guides/custom-editors
 - https://github.com/microsoft/vscode-extension-samples
 - https://dev.to/rakshit47/create-vs-code-extension-with-react-typescript-tailwind-1ba6#react
--https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/frameworks/hello-world-react-vite
+- https://github.com/microsoft/vscode-webview-ui-toolkit-samples/tree/main/frameworks/hello-world-react-vite
+- https://www.npmjs.com/package/better-sqlite3
+
+```ts
+const dbPath = vscode.Uri.joinPath(context.globalStorageUri, 'my-database.sqlite');
+```
