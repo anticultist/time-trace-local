@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
   private static instance: DefaultView;
+  private disposables: vscode.Disposable[] = [];
 
   private view?: vscode.WebviewView;
 
@@ -13,6 +14,15 @@ export class DefaultView implements vscode.WebviewViewProvider {
       DefaultView.instance = new DefaultView(extensionUri);
     }
     return DefaultView.instance;
+  }
+
+  public dispose() {
+    while (this.disposables.length) {
+      const disposable = this.disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
   }
 
   public resolveWebviewView(

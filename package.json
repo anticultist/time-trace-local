@@ -26,7 +26,8 @@
       "activitybar": [
         {
           "id": "time-trace-local",
-          "title": "Time Trace Local"
+          "title": "Time Trace Local",
+          "icon": "media/logo.svg"
         }
       ]
     }
