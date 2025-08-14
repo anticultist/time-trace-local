@@ -42,10 +42,10 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
   private getHtml(webview: vscode.Webview) {
     return `<!DOCTYPE html>
-    <html lang="end">
+    <html lang="en">
       <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial=scale=1.0" >/
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Time Trace Local</title>
       </head>
       <body>

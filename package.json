@@ -13,20 +13,21 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
-    "views": {
-      "time-trace-local-default-view": [
-        {
-          "id": "timeTraceLocalDefaultView",
-          "type": "webview",
-          "name": "Time Trace Local"
-        }
-      ]
-    },
     "viewsContainers": {
       "activitybar": [
         {
           "id": "time-trace-local",
           "title": "Time Trace Local",
+          "icon": "media/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "time-trace-local": [
+        {
+          "id": "timeTraceLocalDefaultView",
+          "type": "webview",
+          "name": "Time Trace Local",
           "icon": "media/logo.svg"
         }
       ]
