@@ -1,5 +1,13 @@
 import * as vscode from "vscode";
 
+export function getUri(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+  pathList: string[]
+) {
+  return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList));
+}
+
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
   private static instance: DefaultView;
@@ -41,6 +49,13 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private getHtml(webview: vscode.Webview) {
+    const scriptUri = getUri(webview, this.extensionUri, [
+      "webview-ui",
+      "build",
+      "assets",
+      "index.js",
+    ]);
+
     return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -49,7 +64,8 @@ export class DefaultView implements vscode.WebviewViewProvider {
         <title>Time Trace Local</title>
       </head>
       <body>
-        Hello World!
+        <div id="root"></div>
+        <script type="module" src="${scriptUri}"></script>
       </body>
     </html>`;
   }

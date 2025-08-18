@@ -19,5 +19,5 @@
     // "noUnusedParameters": true,  /* Report errors on unused parameters. */
   },
   "include": ["src/**/*"],
-  "exclude": ["dist", "out", "node_modules", "vite.config.ts"]
+  "exclude": ["dist", "out", "node_modules", "vite.config.ts", "webview-ui"]
 }
