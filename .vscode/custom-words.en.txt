@@ -1,4 +1,6 @@
+anticultist
 AUTOINCREMENT
 esbuild
 rimraf
+vite
 yarnrc
