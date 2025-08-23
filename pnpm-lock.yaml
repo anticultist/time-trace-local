@@ -48,7 +48,7 @@ importers:
         specifier: ^5.9.2
         version: 5.9.2
       vite:
-        specifier: ^7.0.0
+        specifier: ^7.1.2
         version: 7.1.2(@types/node@22.17.2)
 
 packages:

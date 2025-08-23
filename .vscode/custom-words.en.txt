@@ -1,6 +1,7 @@
 anticultist
 AUTOINCREMENT
 esbuild
+onvsc
 rimraf
 vite
 yarnrc

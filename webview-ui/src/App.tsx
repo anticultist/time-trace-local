@@ -51,20 +51,14 @@ export function App() {
       <div style={{ marginBottom: "20px" }}>
         <h3>Different Button Appearances</h3>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <vscode-button appearance="primary" onvsc-click={handleButtonClick}>
-            Primary
+          <vscode-button onvsc-click={handleButtonClick}>
+            Primary (Default)
           </vscode-button>
-          <vscode-button appearance="secondary" onvsc-click={handleButtonClick}>
+          <vscode-button secondary onvsc-click={handleButtonClick}>
             Secondary
           </vscode-button>
-          <vscode-button appearance="outline" onvsc-click={handleButtonClick}>
-            Outline
-          </vscode-button>
-          <vscode-button
-            appearance="transparent"
-            onvsc-click={handleButtonClick}
-          >
-            Transparent
+          <vscode-button onvsc-click={handleButtonClick}>
+            Standard
           </vscode-button>
         </div>
       </div>
