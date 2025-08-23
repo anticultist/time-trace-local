@@ -1,3 +1,12 @@
+/**
+ * Global type declarations for VSCode Elements web components in React 19
+ *
+ * This file provides TypeScript support for VSCode Elements web components
+ * when used directly in React (not through wrapper components).
+ *
+ * @see https://vscode-elements.github.io/guides/framework-integrations/react/
+ */
+
 import type {
   VscodeBadge,
   VscodeButton,
