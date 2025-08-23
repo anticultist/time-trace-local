@@ -54,13 +54,23 @@ export class DefaultView implements vscode.WebviewViewProvider {
       "index.js",
     ]);
 
+    // Get the Codicons CSS URI for VSCode Elements icons
+    const codiconsUri = this.getUri(webview, this.extensionUri, [
+      "node_modules",
+      "@vscode",
+      "codicons",
+      "dist",
+      "codicon.css",
+    ]);
+
     const nonce = this.getNonce();
 
     const csp = [
       `default-src 'none';`,
       `script-src 'nonce-${nonce}';`,
       `style-src ${webview.cspSource} 'self' 'unsafe-inline';`,
-      `font-src ${webview.cspSource};`,
+      `font-src ${webview.cspSource} 'self';`,
+      `img-src ${webview.cspSource} 'self' data:;`,
     ];
 
     return `<!DOCTYPE html>
@@ -70,6 +80,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
         <meta http-equiv="Content-Security-Policy" content="${csp.join(" ")}">
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Time Trace Local</title>
+        <link rel="stylesheet" href="${codiconsUri}" id="vscode-codicon-stylesheet">
       </head>
       <body>
         <div id="root"></div>

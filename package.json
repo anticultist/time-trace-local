@@ -50,6 +50,9 @@
     "clean": "rimraf dist webview-ui/build",
     "install:all": "pnpm install && cd webview-ui && pnpm install"
   },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.39"
+  },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.17.2",

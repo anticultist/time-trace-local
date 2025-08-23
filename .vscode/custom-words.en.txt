@@ -3,5 +3,7 @@ AUTOINCREMENT
 esbuild
 onvsc
 rimraf
+riscv
+rollup
 vite
 yarnrc
