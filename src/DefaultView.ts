@@ -44,6 +44,25 @@ export class DefaultView implements vscode.WebviewViewProvider {
     };
 
     this.view.webview.html = this.getHtml(this.view.webview);
+
+    // Listen for messages from the webview
+    this.view.webview.onDidReceiveMessage(
+      (message) => {
+        switch (message.type) {
+          case "showInfo":
+            vscode.window.showInformationMessage(message.text);
+            break;
+          case "showWarning":
+            vscode.window.showWarningMessage(message.text);
+            break;
+          case "showError":
+            vscode.window.showErrorMessage(message.text);
+            break;
+        }
+      },
+      null,
+      this.disposables
+    );
   }
 
   private getHtml(webview: vscode.Webview) {

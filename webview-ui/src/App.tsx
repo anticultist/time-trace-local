@@ -1,13 +1,23 @@
 // Import the VSCode Elements React wrapper components
 import { VscodeButton } from "@vscode-elements/react-elements";
 import { useState } from "react";
+import type { VsCodeApi } from "./types/vscode";
 
-export function App() {
+interface AppProps {
+  readonly vscode: VsCodeApi;
+}
+
+export function App({ vscode }: AppProps) {
   const [clickCount, setClickCount] = useState(0);
 
   const handleButtonClick = (event: any) => {
     console.log("VSCode button clicked!", event);
-    alert("VSCode Elements button is working!");
+
+    // Use the VS Code API passed as prop to send a message to the extension
+    vscode.postMessage({
+      type: "showInfo",
+      text: "VSCode Elements button is working!",
+    });
   };
 
   const handleCounterClick = () => {
