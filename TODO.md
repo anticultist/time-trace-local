@@ -7,9 +7,6 @@
     - <https://vscode-elements.github.io/elements-lite/>
   - <https://pnpm.io/workspaces>
   - extend copilot instructions
-    - ask questions if anything is unclear
-    - On error in the webview-ui ask for output form developer tools from the extension host
-    - pnpm
     - <https://raw.githubusercontent.com/vscode-elements/examples/refs/heads/react-vite/react-vite/src/global.d.ts>
 
 - <https://code.visualstudio.com/api/extension-guides/webview>
