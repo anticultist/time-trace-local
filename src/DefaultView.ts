@@ -58,11 +58,35 @@ export class DefaultView implements vscode.WebviewViewProvider {
           case "showError":
             vscode.window.showErrorMessage(message.text);
             break;
+          case "webviewReady":
+            // Webview is ready, send the startup message
+            this.sendStartupMessage();
+            break;
         }
       },
       null,
       this.disposables
     );
+
+    // Send initial message to webview with startup text
+    this.sendStartupMessage();
+  }
+
+  private sendStartupMessage() {
+    if (this.view) {
+      const startupText =
+        "VSCode Elements has been successfully integrated with React 19 using React wrapper components. The buttons above demonstrate different styles and functionality available with proper React event handling.";
+
+      // Send message with a slight delay to ensure webview is ready
+      setTimeout(() => {
+        if (this.view) {
+          this.view.webview.postMessage({
+            type: "updateText",
+            text: startupText,
+          });
+        }
+      }, 100);
+    }
   }
 
   private getHtml(webview: vscode.Webview) {

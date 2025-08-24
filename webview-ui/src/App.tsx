@@ -1,6 +1,6 @@
 // Import the VSCode Elements React wrapper components
 import { VscodeButton } from "@vscode-elements/react-elements";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
 
 interface AppProps {
@@ -9,6 +9,31 @@ interface AppProps {
 
 export function App({ vscode }: AppProps) {
   const [clickCount, setClickCount] = useState(0);
+  const [extensionMessage, setExtensionMessage] = useState<string>(
+    "Loading message from extension..."
+  );
+
+  useEffect(() => {
+    // Listen for messages from the extension
+    const messageListener = (event: MessageEvent) => {
+      const message = event.data;
+      if (message.type === "updateText") {
+        setExtensionMessage(message.text);
+      }
+    };
+
+    window.addEventListener("message", messageListener);
+
+    // Send ready message to extension to request initial data
+    vscode.postMessage({
+      type: "webviewReady",
+    });
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener("message", messageListener);
+    };
+  }, [vscode]);
 
   const handleButtonClick = (event: any) => {
     console.log("VSCode button clicked!", event);
@@ -106,9 +131,7 @@ export function App({ vscode }: AppProps) {
             color: "var(--vscode-descriptionForeground)",
           }}
         >
-          VSCode Elements has been successfully integrated with React 19 using
-          React wrapper components. The buttons above demonstrate different
-          styles and functionality available with proper React event handling.
+          {extensionMessage}
         </p>
       </div>
     </div>
