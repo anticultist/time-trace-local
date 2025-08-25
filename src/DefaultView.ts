@@ -90,12 +90,8 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private getHtml(webview: vscode.Webview) {
-    const scriptUri = this.getUri(webview, this.extensionUri, [
-      "webview-ui",
-      "build",
-      "assets",
-      "index.js",
-    ]);
+    const isDevelopment =
+      this.extensionMode === vscode.ExtensionMode.Development;
 
     // Get the Codicons CSS URI for VSCode Elements icons
     const codiconsUri = this.getUri(webview, this.extensionUri, [
@@ -108,13 +104,52 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     const nonce = this.getNonce();
 
-    const csp = [
-      `default-src 'none';`,
-      `script-src 'nonce-${nonce}';`,
-      `style-src ${webview.cspSource} 'self' 'unsafe-inline';`,
-      `font-src ${webview.cspSource} 'self';`,
-      `img-src ${webview.cspSource} 'self' data:;`,
-    ];
+    let scriptTags: string;
+    let csp: string[];
+
+    if (isDevelopment) {
+      // HMR support: https://vite.dev/guide/backend-integration
+      scriptTags = `
+        <script type="module" nonce="${nonce}">
+          import RefreshRuntime from 'http://localhost:5173/@react-refresh'
+          RefreshRuntime.injectIntoGlobalHook(window)
+          window.$RefreshReg$ = () => {}
+          window.$RefreshSig$ = () => (type) => type
+          window.__vite_plugin_react_preamble_installed__ = true
+        </script>
+        <script type="module" nonce="${nonce}" src="http://localhost:5173/@vite/client"></script>
+        <script type="module" nonce="${nonce}" src="http://localhost:5173/src/index.tsx"></script>
+      `;
+
+      // CSP for development with Vite dev server (include WebSocket for error overlay)
+      csp = [
+        `default-src 'none';`,
+        `script-src 'nonce-${nonce}' http://localhost:5173;`,
+        `style-src ${webview.cspSource} 'self' 'unsafe-inline' http://localhost:5173;`,
+        `font-src ${webview.cspSource} 'self';`,
+        `img-src ${webview.cspSource} 'self' data:;`,
+        `connect-src http://localhost:5173 ws://127.0.0.1:5173 ws://localhost:5173;`,
+      ];
+    } else {
+      // Production mode: use built assets
+      const scriptUri = this.getUri(webview, this.extensionUri, [
+        "webview-ui",
+        "build",
+        "assets",
+        "index.js",
+      ]);
+
+      scriptTags = `<script type="module" nonce="${nonce}" src="${scriptUri}"></script>`;
+
+      // CSP for production
+      csp = [
+        `default-src 'none';`,
+        `script-src 'nonce-${nonce}';`,
+        `style-src ${webview.cspSource} 'self' 'unsafe-inline';`,
+        `font-src ${webview.cspSource} 'self';`,
+        `img-src ${webview.cspSource} 'self' data:;`,
+      ];
+    }
 
     return `<!DOCTYPE html>
     <html lang="en">
@@ -127,7 +162,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
       </head>
       <body>
         <div id="root"></div>
-        <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+        ${scriptTags}
       </body>
     </html>`;
   }
