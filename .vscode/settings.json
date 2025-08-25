@@ -17,5 +17,6 @@
   "terminal.integrated.autoReplies": {
     "Terminate batch job (Y/N)": "Y\r",
     "Batchvorgang abbrechen (J/N)?": "J\r"
-  }
+  },
+  "npm.packageManager": "pnpm"
 }
