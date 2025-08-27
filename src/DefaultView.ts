@@ -1,6 +1,17 @@
 import * as vscode from "vscode";
 import { execFile } from "child_process";
 
+// Windows Event Log IDs for system events
+const WINDOWS_EVENT_IDS = {
+  EVENT_LOG_STARTED: 6005, // Event Log service started (system boot)
+  EVENT_LOG_STOPPED: 6006, // Event Log service stopped (system shutdown)
+  UNEXPECTED_SHUTDOWN: 6008, // Previous system shutdown was unexpected
+  USER_INITIATED_SHUTDOWN: 1074, // User initiated shutdown/restart
+  SYSTEM_SLEEP: 42, // System entering sleep mode
+  KERNEL_GENERAL: 12, // Kernel general events (OS start)
+  SYSTEM_GENERAL: 1, // System general events
+} as const;
+
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
   private static instance: DefaultView;
@@ -98,39 +109,11 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private async handleWinEventsRequest() {
-    if (!this.view) {
-      return;
-    }
-
-    // The exact one-liner provided by the user
-    // TODO: add an other id for os startup
-    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=6005,6006,6008,1074,42,1;StartTime='2025-08-27T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
-
-    // Only supported on Windows hosts
-    if (process.platform !== "win32") {
-      this.view.webview.postMessage({
-        type: "winEventsResult",
-        ok: false,
-        error: "Windows-only feature: requires PowerShell on Windows.",
-      });
-      return;
-    }
-
-    try {
-      const { stdout } = await this.runPowerShell(script);
-      this.view.webview.postMessage({
-        type: "winEventsResult",
-        ok: true,
-        data: stdout,
-      });
-    } catch (err: any) {
-      const msg = err?.stderr || err?.message || String(err);
-      this.view.webview.postMessage({
-        type: "winEventsResult",
-        ok: false,
-        error: msg,
-      });
-    }
+    const winEvents = await this.getWinEvents();
+    this.view?.webview.postMessage({
+      type: "winEventsResult",
+      data: winEvents,
+    });
   }
 
   private async getWinEvents(): Promise<string | undefined> {
@@ -138,13 +121,23 @@ export class DefaultView implements vscode.WebviewViewProvider {
       return;
     }
 
-    // The exact one-liner provided by the user
-    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=6005,6006,6008,1074,42,1;StartTime='2025-08-27T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
-
     // Only supported on Windows hosts
     if (process.platform !== "win32") {
       return;
     }
+
+    const eventIds = [
+      WINDOWS_EVENT_IDS.EVENT_LOG_STARTED,
+      WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED,
+      WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN,
+      WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN,
+      WINDOWS_EVENT_IDS.SYSTEM_SLEEP,
+      WINDOWS_EVENT_IDS.KERNEL_GENERAL,
+      WINDOWS_EVENT_IDS.SYSTEM_GENERAL,
+    ].join(",");
+
+    const today = new Date().toISOString().split("T")[0];
+    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIds};StartTime='${today}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 
     try {
       const { stdout } = await this.runPowerShell(script);
