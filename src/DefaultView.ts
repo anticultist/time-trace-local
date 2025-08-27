@@ -1,16 +1,5 @@
 import * as vscode from "vscode";
-import { execFile } from "child_process";
-
-// Windows Event Log IDs for system events
-const WINDOWS_EVENT_IDS = {
-  EVENT_LOG_STARTED: 6005, // Event Log service started (system boot)
-  EVENT_LOG_STOPPED: 6006, // Event Log service stopped (system shutdown)
-  UNEXPECTED_SHUTDOWN: 6008, // Previous system shutdown was unexpected
-  USER_INITIATED_SHUTDOWN: 1074, // User initiated shutdown/restart
-  SYSTEM_SLEEP: 42, // System entering sleep mode
-  KERNEL_GENERAL: 12, // Kernel general events (OS start)
-  SYSTEM_GENERAL: 1, // System general events
-} as const;
+import { WindowsEventsService } from "./services/WindowsEventsService";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
@@ -109,93 +98,21 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private async handleWinEventsRequest() {
-    const winEvents = await this.getWinEvents();
-    this.view?.webview.postMessage({
-      type: "winEventsResult",
-      data: winEvents,
-    });
-  }
-
-  private async getWinEvents(): Promise<string | undefined> {
     if (!this.view) {
       return;
     }
 
-    // Only supported on Windows hosts
-    if (process.platform !== "win32") {
-      return;
-    }
-
-    const eventIds = [
-      WINDOWS_EVENT_IDS.EVENT_LOG_STARTED,
-      WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED,
-      WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN,
-      WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN,
-      WINDOWS_EVENT_IDS.SYSTEM_SLEEP,
-      WINDOWS_EVENT_IDS.KERNEL_GENERAL,
-      WINDOWS_EVENT_IDS.SYSTEM_GENERAL,
-    ].join(",");
-
-    const today = new Date().toISOString().split("T")[0];
-    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIds};StartTime='${today}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
-
-    try {
-      const { stdout } = await this.runPowerShell(script);
-      return stdout;
-    } catch {
-      return undefined;
-    }
+    const result = await WindowsEventsService.getEvents();
+    this.view.webview.postMessage({
+      type: "winEventsResult",
+      ok: result.ok,
+      data: result.data,
+      error: result.error,
+    });
   }
 
-  private runPowerShell(
-    script: string
-  ): Promise<{ stdout: string; stderr: string }> {
-    const args = [
-      "-NoProfile",
-      "-NonInteractive",
-      "-ExecutionPolicy",
-      "Bypass",
-      "-Command",
-      script,
-    ];
-
-    const tryExec = (exe: string) =>
-      new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-        execFile(
-          exe,
-          args,
-          { maxBuffer: 20 * 1024 * 1024 },
-          (error, stdout, stderr) => {
-            if (error) {
-              // Attach streams to the error for better diagnostics
-              (error as any).stdout = stdout;
-              (error as any).stderr = stderr;
-              const reason =
-                error instanceof Error
-                  ? error
-                  : new Error(
-                      (typeof stderr === "string" && stderr.trim()) ||
-                        (typeof (error as any)?.message === "string" &&
-                          (error as any).message) ||
-                        "PowerShell process failed"
-                    );
-              reject(reason);
-            } else {
-              resolve({ stdout, stderr });
-            }
-          }
-        );
-      });
-
-    // Prefer PowerShell 7 if available, fall back to Windows PowerShell
-    return tryExec("pwsh").catch((firstErr: any) => {
-      // If pwsh is not found, try Windows PowerShell
-      if (firstErr?.code === "ENOENT") {
-        return tryExec("powershell.exe");
-      }
-      // Otherwise, propagate the original error
-      throw firstErr;
-    });
+  private async getWinEvents(): Promise<string | undefined> {
+    return await WindowsEventsService.getEventsAsString();
   }
 
   private getHtml(webview: vscode.Webview) {
