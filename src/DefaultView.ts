@@ -60,11 +60,9 @@ export class DefaultView implements vscode.WebviewViewProvider {
             vscode.window.showErrorMessage(message.text);
             break;
           case "winEvents":
-            // Execute the provided PowerShell one-liner and return its JSON result
             this.handleWinEventsRequest();
             break;
           case "webviewReady":
-            // Webview is ready, send the startup message
             await this.sendStartupMessage();
             break;
         }
@@ -74,16 +72,14 @@ export class DefaultView implements vscode.WebviewViewProvider {
     );
 
     // Send initial message to webview with startup text
-    this.sendStartupMessage();
+    this.sendStartupMessage(); // TODO: <- is this necessary?
   }
 
   private async sendStartupMessage() {
     if (this.view) {
-      // const startupText =
-      //   "VSCode Elements has been successfully integrated with React 19 using React wrapper components. The buttons above demonstrate different styles and functionality available with proper React event handling.";
-
       const startupText =
-        (await this.getWinEvents()) || "No Windows event data available.";
+        (await WindowsEventsService.getEvents()) ||
+        "No Windows event data available.";
 
       // Send message with a slight delay to ensure webview is ready
       setTimeout(() => {
@@ -103,16 +99,13 @@ export class DefaultView implements vscode.WebviewViewProvider {
     }
 
     const result = await WindowsEventsService.getEvents();
+    if (!result) {
+      return;
+    }
     this.view.webview.postMessage({
       type: "winEventsResult",
-      ok: result.ok,
-      data: result.data,
-      error: result.error,
+      data: result,
     });
-  }
-
-  private async getWinEvents(): Promise<string | undefined> {
-    return await WindowsEventsService.getEventsAsString();
   }
 
   private getHtml(webview: vscode.Webview) {

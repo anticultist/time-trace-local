@@ -14,15 +14,6 @@ export const WINDOWS_EVENT_IDS = {
 } as const;
 
 /**
- * Result of a Windows Events query
- */
-export interface WindowsEventsResult {
-  ok: boolean;
-  data?: string;
-  error?: string;
-}
-
-/**
  * Service for querying Windows Event Logs
  */
 export class WindowsEventsService {
@@ -52,12 +43,9 @@ export class WindowsEventsService {
   public static async getEvents(
     eventIds: number[] = WindowsEventsService.DEFAULT_EVENT_IDS,
     startDate?: Date
-  ): Promise<WindowsEventsResult> {
+  ): Promise<string | undefined> {
     if (!WindowsEventsService.isSupported()) {
-      return {
-        ok: false,
-        error: "Windows-only feature: requires PowerShell on Windows.",
-      };
+      return;
     }
 
     const date = startDate || new Date();
@@ -68,25 +56,12 @@ export class WindowsEventsService {
 
     try {
       const { stdout } = await WindowsEventsService.runPowerShell(script);
-      return { ok: true, data: stdout };
+      return stdout;
     } catch (err: any) {
       const errorMessage = err?.stderr || err?.message || String(err);
-      return { ok: false, error: errorMessage };
+      console.error(errorMessage);
+      return;
     }
-  }
-
-  /**
-   * Get Windows system events as a simple string (for backward compatibility)
-   * @param eventIds - Optional array of event IDs to query
-   * @param startDate - Optional start date
-   * @returns Promise with the events JSON string or undefined
-   */
-  public static async getEventsAsString(
-    eventIds?: number[],
-    startDate?: Date
-  ): Promise<string | undefined> {
-    const result = await WindowsEventsService.getEvents(eventIds, startDate);
-    return result.ok ? result.data : undefined;
   }
 
   /**
