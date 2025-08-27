@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { execFile } from "child_process";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
@@ -47,7 +48,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     // Listen for messages from the webview
     this.view.webview.onDidReceiveMessage(
-      (message) => {
+      async (message) => {
         switch (message.type) {
           case "showInfo":
             vscode.window.showInformationMessage(message.text);
@@ -58,9 +59,13 @@ export class DefaultView implements vscode.WebviewViewProvider {
           case "showError":
             vscode.window.showErrorMessage(message.text);
             break;
+          case "winEvents":
+            // Execute the provided PowerShell one-liner and return its JSON result
+            this.handleWinEventsRequest();
+            break;
           case "webviewReady":
             // Webview is ready, send the startup message
-            this.sendStartupMessage();
+            await this.sendStartupMessage();
             break;
         }
       },
@@ -72,10 +77,13 @@ export class DefaultView implements vscode.WebviewViewProvider {
     this.sendStartupMessage();
   }
 
-  private sendStartupMessage() {
+  private async sendStartupMessage() {
     if (this.view) {
+      // const startupText =
+      //   "VSCode Elements has been successfully integrated with React 19 using React wrapper components. The buttons above demonstrate different styles and functionality available with proper React event handling.";
+
       const startupText =
-        "VSCode Elements has been successfully integrated with React 19 using React wrapper components. The buttons above demonstrate different styles and functionality available with proper React event handling.";
+        (await this.getWinEvents()) || "No Windows event data available.";
 
       // Send message with a slight delay to ensure webview is ready
       setTimeout(() => {
@@ -87,6 +95,114 @@ export class DefaultView implements vscode.WebviewViewProvider {
         }
       }, 100);
     }
+  }
+
+  private async handleWinEventsRequest() {
+    if (!this.view) {
+      return;
+    }
+
+    // The exact one-liner provided by the user
+    // TODO: add an other id for os startup
+    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=6005,6006,6008,1074,42,1;StartTime='2025-08-27T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
+
+    // Only supported on Windows hosts
+    if (process.platform !== "win32") {
+      this.view.webview.postMessage({
+        type: "winEventsResult",
+        ok: false,
+        error: "Windows-only feature: requires PowerShell on Windows.",
+      });
+      return;
+    }
+
+    try {
+      const { stdout } = await this.runPowerShell(script);
+      this.view.webview.postMessage({
+        type: "winEventsResult",
+        ok: true,
+        data: stdout,
+      });
+    } catch (err: any) {
+      const msg = err?.stderr || err?.message || String(err);
+      this.view.webview.postMessage({
+        type: "winEventsResult",
+        ok: false,
+        error: msg,
+      });
+    }
+  }
+
+  private async getWinEvents(): Promise<string | undefined> {
+    if (!this.view) {
+      return;
+    }
+
+    // The exact one-liner provided by the user
+    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=6005,6006,6008,1074,42,1;StartTime='2025-08-27T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
+
+    // Only supported on Windows hosts
+    if (process.platform !== "win32") {
+      return;
+    }
+
+    try {
+      const { stdout } = await this.runPowerShell(script);
+      return stdout;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private runPowerShell(
+    script: string
+  ): Promise<{ stdout: string; stderr: string }> {
+    const args = [
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-Command",
+      script,
+    ];
+
+    const tryExec = (exe: string) =>
+      new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        execFile(
+          exe,
+          args,
+          { maxBuffer: 20 * 1024 * 1024 },
+          (error, stdout, stderr) => {
+            if (error) {
+              // Attach streams to the error for better diagnostics
+              (error as any).stdout = stdout;
+              (error as any).stderr = stderr;
+              const reason =
+                error instanceof Error
+                  ? error
+                  : new Error(
+                      (typeof stderr === "string" && stderr.trim()) ||
+                        (typeof (error as any)?.message === "string" &&
+                          (error as any).message) ||
+                        "PowerShell process failed"
+                    );
+              reject(reason);
+            } else {
+              resolve({ stdout, stderr });
+            }
+          }
+        );
+      });
+
+    // Prefer PowerShell 7 if available, fall back to Windows PowerShell
+    return tryExec("pwsh").catch((firstErr: any) => {
+      // If pwsh is not found, try Windows PowerShell
+      if (firstErr?.code === "ENOENT") {
+        return tryExec("powershell.exe");
+      }
+      // Otherwise, propagate the original error
+      throw firstErr;
+    });
   }
 
   private getHtml(webview: vscode.Webview) {

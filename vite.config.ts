@@ -23,6 +23,8 @@ export default defineConfig({
         dir: "dist",
       },
     },
+    // Configure to use Node.js built-ins for extension environment (allows usage of child_process)
+    ssr: true,
     // Configure sourcemaps for development
     sourcemap: process.env.NODE_ENV !== "production",
     // Disable minification in development for better debugging
