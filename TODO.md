@@ -8,6 +8,7 @@
   - <https://pnpm.io/workspaces>
   - extend copilot instructions
     - <https://raw.githubusercontent.com/vscode-elements/examples/refs/heads/react-vite/react-vite/src/global.d.ts>
+  - <https://gist.github.com/t3dotgg/a486c4ae66d32bf17c09c73609dacc5b>
 
 - <https://code.visualstudio.com/api/extension-guides/webview>
 - <https://code.visualstudio.com/api/extension-guides/custom-editors>
@@ -32,9 +33,15 @@
 
 - possible features
   - search
+  - overtime display (max warning e.g. more than 40h)
+  - no breaks
 - further reading
   - <https://github.com/microsoft/vscode/issues/249227>
 
 ```ts
 const dbPath = vscode.Uri.joinPath(context.globalStorageUri, 'my-database.sqlite');
+```
+
+```PowerShell
+$since=(Get-Date).AddDays(-1); Get-WinEvent -FilterHashtable @{LogName='System';Id=6005,6006,6008,1074,42,1;StartTime='2025-08-06T00:00:00'} | ConvertTo-Json
 ```

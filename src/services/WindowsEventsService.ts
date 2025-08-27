@@ -10,6 +10,7 @@ export const WINDOWS_EVENT_IDS = {
   USER_INITIATED_SHUTDOWN: 1074, // User initiated shutdown/restart
   SYSTEM_SLEEP: 42, // System entering sleep mode
   KERNEL_GENERAL: 12, // Kernel general events (OS start)
+  OS_SHUTDOWN: 13, // Operating system shutdown
   SYSTEM_GENERAL: 1, // System general events
 } as const;
 
@@ -24,26 +25,18 @@ export class WindowsEventsService {
     WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN,
     WINDOWS_EVENT_IDS.SYSTEM_SLEEP,
     WINDOWS_EVENT_IDS.KERNEL_GENERAL,
+    WINDOWS_EVENT_IDS.OS_SHUTDOWN,
     WINDOWS_EVENT_IDS.SYSTEM_GENERAL,
   ];
 
-  /**
-   * Check if Windows Events are supported on the current platform
-   */
   public static isSupported(): boolean {
     return process.platform === "win32";
   }
 
-  /**
-   * Get Windows system events for today
-   * @param eventIds - Optional array of event IDs to query (defaults to system events)
-   * @param startDate - Optional start date (defaults to today)
-   * @returns Promise with the events result
-   */
   public static async getEvents(
     eventIds: number[] = WindowsEventsService.DEFAULT_EVENT_IDS,
     startDate?: Date
-  ): Promise<string | undefined> {
+  ): Promise<any> {
     if (!WindowsEventsService.isSupported()) {
       return;
     }
@@ -56,7 +49,14 @@ export class WindowsEventsService {
 
     try {
       const { stdout } = await WindowsEventsService.runPowerShell(script);
-      return stdout;
+
+      try {
+        return JSON.parse(stdout);
+      } catch (parseError) {
+        console.error("JSON parsing error:", parseError);
+        console.error("Original stdout content:", stdout);
+        return;
+      }
     } catch (err: any) {
       const errorMessage = err?.stderr || err?.message || String(err);
       console.error(errorMessage);
@@ -64,11 +64,6 @@ export class WindowsEventsService {
     }
   }
 
-  /**
-   * Execute a PowerShell script
-   * @param script - The PowerShell script to execute
-   * @returns Promise with stdout and stderr
-   */
   private static runPowerShell(
     script: string
   ): Promise<{ stdout: string; stderr: string }> {

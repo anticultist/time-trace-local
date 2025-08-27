@@ -78,7 +78,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
   private async sendStartupMessage() {
     if (this.view) {
       const startupText =
-        (await WindowsEventsService.getEvents()) ||
+        JSON.stringify(await WindowsEventsService.getEvents()) ||
         "No Windows event data available.";
 
       // Send message with a slight delay to ensure webview is ready

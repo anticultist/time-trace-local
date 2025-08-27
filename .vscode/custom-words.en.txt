@@ -1,7 +1,9 @@
 anticultist
 AUTOINCREMENT
 esbuild
+Hashtable
 onvsc
+pwsh
 rimraf
 riscv
 rollup
