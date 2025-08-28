@@ -4,7 +4,7 @@ import { execFile } from "child_process";
  * Represents a Windows event with simplified structure
  */
 export interface Event {
-  time: Date;
+  time: number;
   type: string;
   details: string;
 }
@@ -29,7 +29,7 @@ export const WINDOWS_EVENT_IDS = {
   USER_INITIATED_SHUTDOWN: 1074, // User initiated shutdown/restart
   SYSTEM_SLEEP: 42, // System entering sleep mode
   KERNEL_GENERAL: 12, // Kernel general events (OS start)
-  OS_SHUTDOWN: 13, // Operating system shutdown
+  OS_SHUTDOWN: 13, // Operating system shutdown or startup
   SYSTEM_GENERAL: 1, // System general events
 } as const;
 
@@ -54,14 +54,14 @@ export class WindowsEventsService {
 
   private static getEventTypeName(eventId: number): string {
     const eventMap: Record<number, string> = {
-      [WINDOWS_EVENT_IDS.EVENT_LOG_STARTED]: "event_log_started",
-      [WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED]: "event_log_stopped",
-      [WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN]: "unexpected_shutdown",
-      [WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN]: "user_initiated_shutdown",
-      [WINDOWS_EVENT_IDS.SYSTEM_SLEEP]: "system_sleep",
-      [WINDOWS_EVENT_IDS.KERNEL_GENERAL]: "kernel_general",
-      [WINDOWS_EVENT_IDS.OS_SHUTDOWN]: "os_shutdown",
-      [WINDOWS_EVENT_IDS.SYSTEM_GENERAL]: "system_general",
+      [WINDOWS_EVENT_IDS.EVENT_LOG_STARTED]: `event_log_started_(${WINDOWS_EVENT_IDS.EVENT_LOG_STARTED})`,
+      [WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED]: `event_log_stopped_(${WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED})`,
+      [WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN]: `unexpected_shutdown_(${WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN})`,
+      [WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN]: `user_initiated_shutdown_(${WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN})`,
+      [WINDOWS_EVENT_IDS.SYSTEM_SLEEP]: `system_sleep_(${WINDOWS_EVENT_IDS.SYSTEM_SLEEP})`,
+      [WINDOWS_EVENT_IDS.KERNEL_GENERAL]: `kernel_general_(${WINDOWS_EVENT_IDS.KERNEL_GENERAL})`,
+      [WINDOWS_EVENT_IDS.OS_SHUTDOWN]: `os_shutdown_(${WINDOWS_EVENT_IDS.OS_SHUTDOWN})`,
+      [WINDOWS_EVENT_IDS.SYSTEM_GENERAL]: `system_general_(${WINDOWS_EVENT_IDS.SYSTEM_GENERAL})`,
     };
 
     return eventMap[eventId] || `unknown_event_${eventId}`;
@@ -76,11 +76,11 @@ export class WindowsEventsService {
 
     return rawEvents
       .map((rawEvent) => ({
-        time: new Date(rawEvent.TimeCreated),
+        time: new Date(rawEvent.TimeCreated).getTime(),
         type: WindowsEventsService.getEventTypeName(rawEvent.Id),
         details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
       }))
-      .sort((a, b) => b.time.getTime() - a.time.getTime());
+      .sort((a, b) => b.time - a.time);
   }
 
   public static async getEvents(

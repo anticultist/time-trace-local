@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
 
 interface Event {
-  time: string; // Will be converted from Date to string when sent from extension
+  time: number;
   type: string;
   details: string;
 }
@@ -47,9 +47,9 @@ export function App({ vscode }: AppProps) {
       .join(" ");
   };
 
-  const formatTime = (timeString: string): string => {
+  const formatTime = (timeString: number): string => {
     const date = new Date(timeString);
-    return date.toLocaleString();
+    return date.toISOString();
   };
 
   const handleRefresh = () => {
@@ -113,7 +113,7 @@ export function App({ vscode }: AppProps) {
           >
             {events.map((event, index) => (
               <div
-                key={`${event.time}-${event.type}-${index}`}
+                key={`${event.time}-${event.type}`}
                 style={{
                   padding: "12px",
                   backgroundColor: "var(--vscode-editor-background)",
