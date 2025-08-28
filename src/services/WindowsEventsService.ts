@@ -103,7 +103,7 @@ export class WindowsEventsService {
     const dateString = date.toISOString().split("T")[0];
     const eventIdsString = eventIds.join(",");
 
-    const script = `Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${dateString}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
+    const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${dateString}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 
     try {
       const { stdout } = await WindowsEventsService.runPowerShell(script);
@@ -141,7 +141,10 @@ export class WindowsEventsService {
         execFile(
           exe,
           args,
-          { maxBuffer: 20 * 1024 * 1024 },
+          {
+            maxBuffer: 20 * 1024 * 1024,
+            encoding: "utf8",
+          },
           (error, stdout, stderr) => {
             if (error) {
               // Attach streams to the error for better diagnostics
