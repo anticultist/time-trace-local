@@ -1,6 +1,25 @@
 import { execFile } from "child_process";
 
 /**
+ * Represents a Windows event with simplified structure
+ */
+export interface Event {
+  time: Date;
+  type: string;
+  details: string;
+}
+
+/**
+ * Raw event structure from PowerShell script output
+ */
+interface RawWindowsEvent {
+  TimeCreated: string;
+  Id: number;
+  ProviderName: string;
+  Message: string;
+}
+
+/**
  * Windows Event Log IDs for system events
  */
 export const WINDOWS_EVENT_IDS = {
@@ -33,10 +52,49 @@ export class WindowsEventsService {
     return process.platform === "win32";
   }
 
+  /**
+   * Maps Windows Event IDs to descriptive names
+   * @param eventId - The numeric event ID
+   * @returns Descriptive name for the event
+   */
+  private static getEventTypeName(eventId: number): string {
+    const eventMap: Record<number, string> = {
+      [WINDOWS_EVENT_IDS.EVENT_LOG_STARTED]: "event_log_started",
+      [WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED]: "event_log_stopped",
+      [WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN]: "unexpected_shutdown",
+      [WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN]: "user_initiated_shutdown",
+      [WINDOWS_EVENT_IDS.SYSTEM_SLEEP]: "system_sleep",
+      [WINDOWS_EVENT_IDS.KERNEL_GENERAL]: "kernel_general",
+      [WINDOWS_EVENT_IDS.OS_SHUTDOWN]: "os_shutdown",
+      [WINDOWS_EVENT_IDS.SYSTEM_GENERAL]: "system_general",
+    };
+
+    return eventMap[eventId] || `unknown_event_${eventId}`;
+  }
+
+  /**
+   * Converts raw PowerShell output to Event objects
+   * @param rawEvents - The raw event data from PowerShell script
+   * @returns Array of Event objects with simplified structure
+   */
+  public static convertRawEventsToEvents(
+    rawEvents: RawWindowsEvent[]
+  ): Event[] {
+    if (!Array.isArray(rawEvents)) {
+      return [];
+    }
+
+    return rawEvents.map((rawEvent) => ({
+      time: new Date(rawEvent.TimeCreated),
+      type: WindowsEventsService.getEventTypeName(rawEvent.Id),
+      details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
+    }));
+  }
+
   public static async getEvents(
     eventIds: number[] = WindowsEventsService.DEFAULT_EVENT_IDS,
     startDate?: Date
-  ): Promise<any> {
+  ): Promise<RawWindowsEvent[] | Event[] | undefined> {
     if (!WindowsEventsService.isSupported()) {
       return;
     }
@@ -51,7 +109,9 @@ export class WindowsEventsService {
       const { stdout } = await WindowsEventsService.runPowerShell(script);
 
       try {
-        return JSON.parse(stdout);
+        const rawEvents = JSON.parse(stdout);
+
+        return WindowsEventsService.convertRawEventsToEvents(rawEvents);
       } catch (parseError) {
         console.error("JSON parsing error:", parseError);
         console.error("Original stdout content:", stdout);
