@@ -59,11 +59,11 @@ export class DefaultView implements vscode.WebviewViewProvider {
           case "showError":
             vscode.window.showErrorMessage(message.text);
             break;
-          case "winEvents":
-            this.handleWinEventsRequest();
+          case "updateEvents":
+            await this.sendEvents();
             break;
           case "webviewReady":
-            await this.sendStartupMessage();
+            await this.sendEvents();
             break;
         }
       },
@@ -72,39 +72,21 @@ export class DefaultView implements vscode.WebviewViewProvider {
     );
 
     // Send initial message to webview with startup text
-    this.sendStartupMessage(); // TODO: <- is this necessary?
+    this.sendEvents(); // TODO: <- is this necessary?
   }
 
-  private async sendStartupMessage() {
-    if (this.view) {
-      const startupText =
-        JSON.stringify(await WindowsEventsService.getEvents()) ||
-        "No Windows event data available.";
-
-      // Send message with a slight delay to ensure webview is ready
-      setTimeout(() => {
-        if (this.view) {
-          this.view.webview.postMessage({
-            type: "updateText",
-            text: startupText,
-          });
-        }
-      }, 100);
-    }
-  }
-
-  private async handleWinEventsRequest() {
+  private async sendEvents() {
     if (!this.view) {
       return;
     }
 
-    const result = await WindowsEventsService.getEvents();
-    if (!result) {
+    const events = await WindowsEventsService.getEvents();
+    if (!events) {
       return;
     }
     this.view.webview.postMessage({
-      type: "winEventsResult",
-      data: result,
+      type: "showEvents",
+      events: events,
     });
   }
 

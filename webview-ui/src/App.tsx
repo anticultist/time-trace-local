@@ -3,22 +3,27 @@ import { VscodeButton } from "@vscode-elements/react-elements";
 import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
 
+interface Event {
+  time: string; // Will be converted from Date to string when sent from extension
+  type: string;
+  details: string;
+}
+
 interface AppProps {
   readonly vscode: VsCodeApi;
 }
 
 export function App({ vscode }: AppProps) {
-  const [clickCount, setClickCount] = useState(0);
-  const [extensionMessage, setExtensionMessage] = useState<string>(
-    "Loading message from extension..."
-  );
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Listen for messages from the extension
     const messageListener = (event: MessageEvent) => {
       const message = event.data;
-      if (message.type === "updateText") {
-        setExtensionMessage(message.text);
+      if (message.type === "showEvents") {
+        setEvents(message.events || []);
+        setIsLoading(false);
       }
     };
 
@@ -35,105 +40,126 @@ export function App({ vscode }: AppProps) {
     };
   }, [vscode]);
 
-  const handleButtonClick = (event: any) => {
-    console.log("VSCode button clicked!", event);
-
-    // Use the VS Code API passed as prop to send a message to the extension
-    vscode.postMessage({
-      type: "showInfo",
-      text: "VSCode Elements button is working!",
-    });
+  const formatEventType = (type: string): string => {
+    return type
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
   };
 
-  const handleCounterClick = () => {
-    console.log("Counter button clicked! Current count:", clickCount);
-    setClickCount((prevCount) => prevCount + 1);
+  const formatTime = (timeString: string): string => {
+    const date = new Date(timeString);
+    return date.toLocaleString();
+  };
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    vscode.postMessage({
+      type: "updateEvents",
+    });
   };
 
   return (
     <div style={{ padding: "20px", fontFamily: "var(--vscode-font-family)" }}>
-      <h1>VSCode Elements React Integration Test</h1>
-      <p>
-        Testing VSCode Elements integration with React 19 using React wrapper
-        components.
-      </p>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Primary Button</h3>
-        <VscodeButton onClick={handleButtonClick}>Click me!</VscodeButton>
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Secondary Button</h3>
-        <VscodeButton secondary onClick={handleButtonClick}>
-          Secondary Action
-        </VscodeButton>
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Disabled Button</h3>
-        <VscodeButton disabled>Can't click me</VscodeButton>
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Button with Icon</h3>
-        <VscodeButton icon="add" onClick={handleButtonClick}>
-          Add Item
-        </VscodeButton>
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Icon-only Button</h3>
-        <VscodeButton
-          icon="save"
-          iconOnly
-          onClick={handleButtonClick}
-          title="Save"
-        />
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Click Counter Button</h3>
-        <VscodeButton onClick={handleCounterClick}>
-          {clickCount} times clicked
-        </VscodeButton>
-      </div>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Different Button Appearances</h3>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          <VscodeButton onClick={handleButtonClick}>
-            Primary (Default)
-          </VscodeButton>
-          <VscodeButton secondary onClick={handleButtonClick}>
-            Secondary
-          </VscodeButton>
-          <VscodeButton onClick={handleButtonClick}>Standard</VscodeButton>
-        </div>
-      </div>
-
       <div
         style={{
-          marginTop: "40px",
-          padding: "15px",
-          backgroundColor: "var(--vscode-editor-background)",
-          border: "1px solid var(--vscode-panel-border)",
-          borderRadius: "4px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
         }}
       >
-        <h4 style={{ margin: "0 0 10px 0" }}>
-          ✅ VSCode Elements React Integration Complete!
-        </h4>
-        <p
+        <h1>Time Trace Local</h1>
+        <VscodeButton
+          icon="refresh"
+          onClick={handleRefresh}
+          disabled={isLoading}
+        >
+          Refresh
+        </VscodeButton>
+      </div>
+
+      {isLoading && (
+        <div
           style={{
-            margin: "0",
-            fontSize: "14px",
+            textAlign: "center",
+            padding: "40px",
             color: "var(--vscode-descriptionForeground)",
           }}
         >
-          {extensionMessage}
-        </p>
-      </div>
+          Loading events...
+        </div>
+      )}
+
+      {!isLoading && events.length === 0 && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px",
+            color: "var(--vscode-descriptionForeground)",
+          }}
+        >
+          No events found for today.
+        </div>
+      )}
+
+      {!isLoading && events.length > 0 && (
+        <div>
+          <h3 style={{ marginBottom: "15px" }}>
+            System Events ({events.length})
+          </h3>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            {events.map((event, index) => (
+              <div
+                key={`${event.time}-${event.type}-${index}`}
+                style={{
+                  padding: "12px",
+                  backgroundColor: "var(--vscode-editor-background)",
+                  border: "1px solid var(--vscode-panel-border)",
+                  borderRadius: "4px",
+                  fontSize: "14px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: "6px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: "bold",
+                      color: "var(--vscode-foreground)",
+                    }}
+                  >
+                    {formatEventType(event.type)}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--vscode-descriptionForeground)",
+                    }}
+                  >
+                    {formatTime(event.time)}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    color: "var(--vscode-descriptionForeground)",
+                    lineHeight: "1.4",
+                  }}
+                >
+                  {event.details}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

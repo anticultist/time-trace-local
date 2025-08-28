@@ -52,11 +52,6 @@ export class WindowsEventsService {
     return process.platform === "win32";
   }
 
-  /**
-   * Maps Windows Event IDs to descriptive names
-   * @param eventId - The numeric event ID
-   * @returns Descriptive name for the event
-   */
   private static getEventTypeName(eventId: number): string {
     const eventMap: Record<number, string> = {
       [WINDOWS_EVENT_IDS.EVENT_LOG_STARTED]: "event_log_started",
@@ -72,11 +67,6 @@ export class WindowsEventsService {
     return eventMap[eventId] || `unknown_event_${eventId}`;
   }
 
-  /**
-   * Converts raw PowerShell output to Event objects
-   * @param rawEvents - The raw event data from PowerShell script
-   * @returns Array of Event objects with simplified structure
-   */
   public static convertRawEventsToEvents(
     rawEvents: RawWindowsEvent[]
   ): Event[] {
@@ -84,11 +74,13 @@ export class WindowsEventsService {
       return [];
     }
 
-    return rawEvents.map((rawEvent) => ({
-      time: new Date(rawEvent.TimeCreated),
-      type: WindowsEventsService.getEventTypeName(rawEvent.Id),
-      details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
-    }));
+    return rawEvents
+      .map((rawEvent) => ({
+        time: new Date(rawEvent.TimeCreated),
+        type: WindowsEventsService.getEventTypeName(rawEvent.Id),
+        details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
+      }))
+      .sort((a, b) => b.time.getTime() - a.time.getTime());
   }
 
   public static async getEvents(
