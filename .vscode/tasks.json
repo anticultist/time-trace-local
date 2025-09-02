@@ -6,7 +6,7 @@
     {
       "label": "build",
       "type": "npm",
-      "script": "compile",
+      "script": "build",
       "group": {
         "kind": "build",
         "isDefault": true
@@ -18,39 +18,60 @@
     },
     {
       "label": "watch",
-      "dependsOn": ["npm: watch:tsc", "npm: watch:vite"],
+      "dependsOn": [
+        "watch:extension:tsc",
+        "watch:extension:vite",
+        "watch:webview-ui"
+      ],
       "presentation": {
         "reveal": "never"
       },
       "group": "build"
     },
     {
-      "type": "npm",
-      "script": "watch:vite",
+      "label": "watch:extension:vite",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["--filter", "extension", "run", "watch:vite"],
       "group": "build",
       "problemMatcher": [],
       "isBackground": true,
-      "label": "npm: watch:vite",
       "presentation": {
         "group": "watch",
         "reveal": "never"
       }
     },
     {
-      "type": "npm",
-      "script": "watch:tsc",
+      "label": "watch:extension:tsc",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["--filter", "extension", "run", "watch:tsc"],
       "group": "build",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
-      "label": "npm: watch:tsc",
       "presentation": {
         "group": "watch",
         "reveal": "never"
       }
     },
     {
-      "type": "npm",
-      "script": "watch-tests",
+      "label": "watch:webview-ui",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["--filter", "webview-ui", "run", "start"],
+      "group": "build",
+      "problemMatcher": [],
+      "isBackground": true,
+      "presentation": {
+        "group": "watch",
+        "reveal": "never"
+      }
+    },
+    {
+      "label": "watch-tests",
+      "type": "shell",
+      "command": "pnpm",
+      "args": ["--filter", "extension", "run", "watch-tests"],
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": {
@@ -60,9 +81,13 @@
       "group": "build"
     },
     {
-      "label": "tasks: watch-tests",
-      "dependsOn": ["npm: watch", "npm: watch-tests"],
-      "problemMatcher": []
+      "label": "clean",
+      "type": "npm",
+      "script": "clean",
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      }
     }
   ]
 }

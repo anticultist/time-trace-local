@@ -134,6 +134,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
     } else {
       // Production mode: use built assets
       const scriptUri = this.getUri(webview, this.extensionUri, [
+        "..",
         "webview-ui",
         "build",
         "assets",
