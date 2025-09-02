@@ -91,7 +91,13 @@ export class WindowsEventsService {
       return;
     }
 
-    const date = startDate || new Date();
+    const date =
+      startDate ||
+      (() => {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        return yesterday;
+      })();
     const dateString = date.toISOString().split("T")[0];
     const eventIdsString = eventIds.join(",");
 
