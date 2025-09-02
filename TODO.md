@@ -30,6 +30,7 @@
   - visual language (color psychology)
   - a/b testing a vs code extension
   - survey
+  - [Few Guesses, More Success: 4 Principles to Reduce Cognitive Load in Forms](https://www.nngroup.com/articles/4-principles-reduce-cognitive-load/)
 
 - possible features
   - search
