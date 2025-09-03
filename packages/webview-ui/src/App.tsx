@@ -2,12 +2,7 @@
 import { VscodeButton } from "@vscode-elements/react-elements";
 import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
-
-interface Event {
-  time: number;
-  type: string;
-  details: string;
-}
+import type { Event } from "./types/services";
 
 interface AppProps {
   readonly vscode: VsCodeApi;

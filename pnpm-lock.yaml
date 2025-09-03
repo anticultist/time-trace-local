@@ -90,6 +90,9 @@ importers:
 
   packages/webview-ui:
     dependencies:
+      '@time-trace-local/services':
+        specifier: workspace:*
+        version: link:../services
       '@vscode-elements/react-elements':
         specifier: ^2.0.0
         version: 2.3.1(@types/react@19.1.12)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)

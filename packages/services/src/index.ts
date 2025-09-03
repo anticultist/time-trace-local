@@ -1,6 +1,4 @@
-export {
-  WindowsEventsService,
-  WINDOWS_EVENT_IDS,
-} from "./WindowsEventsService";
+export { WindowsEventsService } from "./WindowsEventsService";
 
-export type { Event } from "./WindowsEventsService";
+export type { Event } from "./types";
+export { WINDOWS_EVENT_IDS } from "./types";

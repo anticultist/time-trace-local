@@ -13,6 +13,7 @@
     "lint": "echo 'No linting configured for webview-ui'"
   },
   "dependencies": {
+    "@time-trace-local/services": "workspace:*",
     "@vscode-elements/react-elements": "^2.0.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"

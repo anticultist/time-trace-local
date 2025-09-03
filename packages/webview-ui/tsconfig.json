@@ -17,7 +17,8 @@
     "jsx": "react-jsx",
     "composite": true,
     "declaration": true,
-    "outDir": "build"
+    "outDir": "build",
+    "baseUrl": "."
   },
   "include": ["./src"]
 }
