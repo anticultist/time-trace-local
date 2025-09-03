@@ -4,7 +4,9 @@
   "description": "Time Trace Local VS Code Extension Workspace",
   "version": "0.0.1",
   "scripts": {
-    "build": "pnpm run -r build",
+    "build": "pnpm run --filter=@time-trace-local/services build && pnpm run --filter=time-trace-local build && pnpm run --filter=webview-ui build",
+    "build:services": "pnpm run --filter=@time-trace-local/services build",
+    "build:extension": "pnpm run --filter=time-trace-local build",
     "watch": "pnpm run -r watch",
     "clean": "pnpm run -r clean",
     "lint": "pnpm run -r lint",

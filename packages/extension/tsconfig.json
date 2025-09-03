@@ -10,11 +10,13 @@
     "isolatedModules": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
     "composite": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "."
     /* Additional Checks */
     // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
     // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */

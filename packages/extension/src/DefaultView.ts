@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { WindowsEventsService } from "./services/WindowsEventsService";
+import { WindowsEventsService } from "@time-trace-local/services";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";

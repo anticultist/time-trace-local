@@ -45,5 +45,11 @@ export default defineConfig({
   // Ensure proper module resolution
   resolve: {
     extensions: [".ts", ".js", ".json"],
+    alias: {
+      "@time-trace-local/services": resolve(
+        __dirname,
+        "../services/src/index.ts"
+      ),
+    },
   },
 });

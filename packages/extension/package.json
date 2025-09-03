@@ -47,10 +47,11 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@vscode/codicons": "^0.0.39"
+    "@vscode/codicons": "^0.0.39",
+    "@time-trace-local/services": "workspace:*"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
