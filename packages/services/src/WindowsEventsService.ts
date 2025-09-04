@@ -17,14 +17,8 @@ interface RawWindowsEvent {
  */
 export class WindowsEventsService {
   private static readonly DEFAULT_EVENT_IDS = [
-    WINDOWS_EVENT_IDS.EVENT_LOG_STARTED,
-    WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED,
-    WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN,
-    WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN,
-    WINDOWS_EVENT_IDS.SYSTEM_SLEEP,
-    WINDOWS_EVENT_IDS.KERNEL_GENERAL,
-    WINDOWS_EVENT_IDS.OS_SHUTDOWN,
-    WINDOWS_EVENT_IDS.SYSTEM_GENERAL,
+    WINDOWS_EVENT_IDS.KERNEL_BOOT,
+    WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN,
   ];
 
   public static isSupported(): boolean {
@@ -33,14 +27,8 @@ export class WindowsEventsService {
 
   private static getEventTypeName(eventId: number): string {
     const eventMap: Record<number, string> = {
-      [WINDOWS_EVENT_IDS.EVENT_LOG_STARTED]: `event_log_started_(${WINDOWS_EVENT_IDS.EVENT_LOG_STARTED})`,
-      [WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED]: `event_log_stopped_(${WINDOWS_EVENT_IDS.EVENT_LOG_STOPPED})`,
-      [WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN]: `unexpected_shutdown_(${WINDOWS_EVENT_IDS.UNEXPECTED_SHUTDOWN})`,
-      [WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN]: `user_initiated_shutdown_(${WINDOWS_EVENT_IDS.USER_INITIATED_SHUTDOWN})`,
-      [WINDOWS_EVENT_IDS.SYSTEM_SLEEP]: `system_sleep_(${WINDOWS_EVENT_IDS.SYSTEM_SLEEP})`,
-      [WINDOWS_EVENT_IDS.KERNEL_GENERAL]: `kernel_general_(${WINDOWS_EVENT_IDS.KERNEL_GENERAL})`,
-      [WINDOWS_EVENT_IDS.OS_SHUTDOWN]: `os_shutdown_(${WINDOWS_EVENT_IDS.OS_SHUTDOWN})`,
-      [WINDOWS_EVENT_IDS.SYSTEM_GENERAL]: `system_general_(${WINDOWS_EVENT_IDS.SYSTEM_GENERAL})`,
+      [WINDOWS_EVENT_IDS.KERNEL_BOOT]: "boot",
+      [WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN]: "shutdown",
     };
 
     return eventMap[eventId] || `unknown_event_${eventId}`;
@@ -54,6 +42,15 @@ export class WindowsEventsService {
     }
 
     return rawEvents
+      .filter((rawEvent) => {
+        // Only include events with ID 12 or 13 from Kernel-General provider
+        const isValidId =
+          rawEvent.Id === WINDOWS_EVENT_IDS.KERNEL_BOOT ||
+          rawEvent.Id === WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN;
+        const isValidProvider =
+          rawEvent.ProviderName === "Microsoft-Windows-Kernel-General";
+        return isValidId && isValidProvider;
+      })
       .map((rawEvent) => ({
         time: new Date(rawEvent.TimeCreated).getTime(),
         type: WindowsEventsService.getEventTypeName(rawEvent.Id),
