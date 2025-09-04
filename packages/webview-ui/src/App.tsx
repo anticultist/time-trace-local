@@ -1,5 +1,5 @@
 // Import the VSCode Elements React wrapper components
-import { VscodeButton } from "@vscode-elements/react-elements";
+import { VscodeButton, VscodeIcon } from "@vscode-elements/react-elements";
 import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
 import type { Event } from "./types/services";
@@ -43,16 +43,51 @@ export function App({ vscode }: AppProps) {
   };
 
   const formatTime = (timeString: number): string => {
-    const formatter = new Intl.DateTimeFormat("de-DE", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+    const date = new Date(timeString);
+    return date.toLocaleTimeString("de-DE", {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      fractionalSecondDigits: 3,
     });
-    return formatter.format(new Date(timeString)).replace("T", " ");
+  };
+
+  const formatDate = (timeString: number): string => {
+    const date = new Date(timeString);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    // Check if it's today
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    }
+
+    // Check if it's yesterday
+    if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+
+    // For other dates, use yyyy-mm-dd format
+    return date.toISOString().split("T")[0];
+  };
+
+  const groupEventsByDay = (events: Event[]) => {
+    const grouped: { [key: string]: Event[] } = {};
+
+    events.forEach((event) => {
+      const dateKey = formatDate(event.time);
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(event);
+    });
+
+    // Sort events within each day (newest first)
+    Object.keys(grouped).forEach((dateKey) => {
+      grouped[dateKey].sort((a, b) => b.time - a.time);
+    });
+
+    return grouped;
   };
   const handleRefresh = () => {
     setIsLoading(true);
@@ -101,7 +136,7 @@ export function App({ vscode }: AppProps) {
             color: "var(--vscode-descriptionForeground)",
           }}
         >
-          No events found for today.
+          No events found for last week.
         </div>
       )}
 
@@ -110,56 +145,91 @@ export function App({ vscode }: AppProps) {
           <h3 style={{ marginBottom: "15px" }}>
             System Events ({events.length})
           </h3>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
-            {events.map((event, index) => (
-              <div
-                key={`${event.time}-${event.type}`}
-                style={{
-                  padding: "12px",
-                  backgroundColor: "var(--vscode-editor-background)",
-                  border: "1px solid var(--vscode-panel-border)",
-                  borderRadius: "4px",
-                  fontSize: "14px",
-                }}
-              >
+          {Object.entries(groupEventsByDay(events))
+            .sort(([dateA], [dateB]) => {
+              // Sort by day order: Today, Yesterday, then chronological
+              const order = ["Today", "Yesterday"];
+              const indexA = order.indexOf(dateA);
+              const indexB = order.indexOf(dateB);
+
+              if (indexA !== -1 && indexB !== -1) {
+                return indexA - indexB;
+              } else if (indexA !== -1) {
+                return -1;
+              } else if (indexB !== -1) {
+                return 1;
+              } else {
+                // For other dates, sort by actual date (newest first)
+                const eventsA = groupEventsByDay(events)[dateA];
+                const eventsB = groupEventsByDay(events)[dateB];
+                return eventsB[0].time - eventsA[0].time;
+              }
+            })
+            .map(([date, dayEvents]) => (
+              <div key={date} style={{ marginBottom: "20px" }}>
+                <h4
+                  style={{
+                    marginBottom: "10px",
+                    color: "var(--vscode-foreground)",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                  }}
+                >
+                  {date} ({dayEvents.length})
+                </h4>
                 <div
                   style={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    marginBottom: "6px",
+                    flexDirection: "column",
+                    gap: "4px",
                   }}
                 >
-                  <span
-                    style={{
-                      fontWeight: "bold",
-                      color: "var(--vscode-foreground)",
-                    }}
-                  >
-                    {formatEventType(event.type)}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "var(--vscode-descriptionForeground)",
-                    }}
-                  >
-                    {formatTime(event.time)}
-                  </span>
-                </div>
-                <div
-                  style={{
-                    color: "var(--vscode-descriptionForeground)",
-                    lineHeight: "1.4",
-                  }}
-                >
-                  {event.details}
+                  {dayEvents.map((event) => (
+                    <div
+                      key={`${event.time}-${event.type}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        padding: "8px 12px",
+                        backgroundColor: "var(--vscode-editor-background)",
+                        border: "1px solid var(--vscode-panel-border)",
+                        borderRadius: "4px",
+                        fontSize: "14px",
+                        gap: "12px",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "13px",
+                          color: "var(--vscode-descriptionForeground)",
+                          fontFamily: "monospace",
+                          minWidth: "70px",
+                        }}
+                      >
+                        {formatTime(event.time)}
+                      </span>
+                      <span
+                        style={{
+                          color: "var(--vscode-foreground)",
+                          flex: 1,
+                        }}
+                      >
+                        {formatEventType(event.type)}
+                      </span>
+                      <VscodeIcon
+                        name="info"
+                        actionIcon
+                        title={event.details}
+                        style={{
+                          color: "var(--vscode-descriptionForeground)",
+                          cursor: "pointer",
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
-          </div>
         </div>
       )}
     </div>

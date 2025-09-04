@@ -70,9 +70,9 @@ export class WindowsEventsService {
     const date =
       startDate ||
       (() => {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        return yesterday;
+        const lastWeek = new Date();
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        return lastWeek;
       })();
     const dateString = date.toISOString().split("T")[0];
     const eventIdsString = eventIds.join(",");
