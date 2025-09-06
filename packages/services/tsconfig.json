@@ -8,6 +8,7 @@
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "sourceMap": true,
     "types": ["node"],
     "isolatedModules": true,
     "composite": true

@@ -97,7 +97,7 @@ export function App({ vscode }: AppProps) {
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "var(--vscode-font-family)" }}>
+    <div style={{ fontFamily: "var(--vscode-font-family)" }}>
       <div
         style={{
           display: "flex",
