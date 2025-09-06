@@ -11,9 +11,11 @@
     "clean": "pnpm run -r clean",
     "lint": "pnpm run -r lint",
     "test": "pnpm run -r test",
-    "install:all": "pnpm install"
+    "install:all": "pnpm install",
+    "start-webview-if-needed": "tsx scripts/start-webview-if-needed.ts"
   },
   "devDependencies": {
+    "@types/node": "22.17.2",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
     "@vscode/test-cli": "^0.0.11",
@@ -22,7 +24,8 @@
     "eslint": "^9.32.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.6.2",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.5"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

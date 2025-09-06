@@ -17,76 +17,35 @@
       "problemMatcher": []
     },
     {
-      "label": "watch",
-      "dependsOn": [
-        "watch:extension:tsc",
-        "watch:extension:vite",
-        "watch:webview-ui"
-      ],
-      "presentation": {
-        "reveal": "never"
-      },
-      "group": "build"
-    },
-    {
-      "label": "watch:extension:vite",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["--filter", "extension", "run", "watch:vite"],
+      "label": "dev-setup",
+      "dependsOrder": "sequence",
+      "dependsOn": ["start-webview-if-needed", "build"],
       "group": "build",
-      "problemMatcher": [],
-      "isBackground": true,
       "presentation": {
-        "group": "watch",
-        "reveal": "never"
+        "reveal": "always",
+        "group": "dev-setup"
       }
     },
     {
-      "label": "watch:extension:tsc",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["--filter", "extension", "run", "watch:tsc"],
-      "group": "build",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
-      "presentation": {
-        "group": "watch",
-        "reveal": "never"
-      }
-    },
-    {
-      "label": "watch:webview-ui",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["--filter", "webview-ui", "run", "start"],
-      "group": "build",
-      "problemMatcher": [],
-      "isBackground": true,
-      "presentation": {
-        "group": "watch",
-        "reveal": "never"
-      }
-    },
-    {
-      "label": "watch-tests",
-      "type": "shell",
-      "command": "pnpm",
-      "args": ["--filter", "extension", "run", "watch-tests"],
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
-      "presentation": {
-        "reveal": "never",
-        "group": "watchers"
-      },
-      "group": "build"
-    },
-    {
-      "label": "clean",
+      "label": "start-webview-if-needed",
       "type": "npm",
-      "script": "clean",
+      "script": "start-webview-if-needed",
       "group": "build",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "vite-starter",
+        "pattern": {
+          "regexp": ".*"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^VITE_CHECKING:",
+          "endsPattern": "^VITE_READY:"
+        }
+      },
       "presentation": {
-        "reveal": "silent"
+        "group": "webview",
+        "reveal": "always"
       }
     }
   ]

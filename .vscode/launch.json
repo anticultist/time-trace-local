@@ -14,20 +14,7 @@
         "--extensionDevelopmentPath=${workspaceFolder}/packages/extension"
       ],
       "outFiles": ["${workspaceFolder}/packages/extension/dist/**/*.js"],
-      "preLaunchTask": "build",
-      "sourceMaps": true,
-      "smartStep": true,
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "name": "Run Extension (Watch Mode)",
-      "type": "extensionHost",
-      "request": "launch",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/packages/extension"
-      ],
-      "outFiles": ["${workspaceFolder}/packages/extension/dist/**/*.js"],
-      "preLaunchTask": "watch",
+      "preLaunchTask": "dev-setup",
       "sourceMaps": true,
       "smartStep": true,
       "skipFiles": ["<node_internals>/**"]
