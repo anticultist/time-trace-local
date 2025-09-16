@@ -84,6 +84,9 @@ importers:
       vite:
         specifier: ^7.1.2
         version: 7.1.2(@types/node@22.17.2)(tsx@4.20.5)
+      vite-plugin-static-copy:
+        specifier: ^3.1.2
+        version: 3.1.2(vite@7.1.2(@types/node@22.17.2)(tsx@4.20.5))
 
   packages/services:
     devDependencies:
@@ -2770,6 +2773,12 @@ packages:
   version-range@4.15.0:
     resolution: {integrity: sha512-Ck0EJbAGxHwprkzFO966t4/5QkRuzh+/I1RxhLgUKKwEn+Cd8NwM60mE3AqBZg5gYODoXW0EFsQvbZjRlvdqbg==}
     engines: {node: '>=4'}
+
+  vite-plugin-static-copy@3.1.2:
+    resolution: {integrity: sha512-aVmYOzptLVOI2b1jL+cmkF7O6uhRv1u5fvOkQgbohWZp2CbR22kn9ZqkCUIt9umKF7UhdbsEpshn1rf4720QFg==}
+    engines: {node: ^18.0.0 || >=20.0.0}
+    peerDependencies:
+      vite: ^5.0.0 || ^6.0.0 || ^7.0.0
 
   vite@7.1.2:
     resolution: {integrity: sha512-J0SQBPlQiEXAF7tajiH+rUooJPo0l8KQgyg4/aMunNtrOa7bwuZJsJbDWzeljqQpgftxuq5yNJxQ91O9ts29UQ==}
@@ -5888,6 +5897,15 @@ snapshots:
       spdx-expression-parse: 3.0.1
 
   version-range@4.15.0: {}
+
+  vite-plugin-static-copy@3.1.2(vite@7.1.2(@types/node@22.17.2)(tsx@4.20.5)):
+    dependencies:
+      chokidar: 3.6.0
+      fs-extra: 11.3.2
+      p-map: 7.0.3
+      picocolors: 1.1.1
+      tinyglobby: 0.2.14
+      vite: 7.1.2(@types/node@22.17.2)(tsx@4.20.5)
 
   vite@7.1.2(@types/node@22.17.2)(tsx@4.20.5):
     dependencies:

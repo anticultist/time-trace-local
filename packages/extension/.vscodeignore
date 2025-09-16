@@ -12,5 +12,5 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
-# Keep webview-ui build
-!../webview-ui/build/**
+tsconfig.node.json
+tsconfig.tsbuildinfo

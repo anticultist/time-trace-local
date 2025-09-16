@@ -1,10 +1,31 @@
 import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        // Copy entire webview-ui build directory
+        {
+          src: "../webview-ui/build",
+          dest: "webview-ui",
+        },
+        // Copy codicons assets
+        {
+          src: "node_modules/@vscode/codicons/dist/codicon.css",
+          dest: "assets",
+        },
+        {
+          src: "node_modules/@vscode/codicons/dist/codicon.ttf",
+          dest: "assets",
+        },
+      ],
+    }),
+  ],
   // Configure library mode for VS Code extension
   build: {
     lib: {

@@ -96,10 +96,8 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     // Get the Codicons CSS URI for VSCode Elements icons
     const codiconsUri = this.getUri(webview, this.extensionUri, [
-      "node_modules",
-      "@vscode",
-      "codicons",
       "dist",
+      "assets",
       "codicon.css",
     ]);
 
@@ -134,7 +132,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
     } else {
       // Production mode: use built assets
       const scriptUri = this.getUri(webview, this.extensionUri, [
-        "..",
+        "dist",
         "webview-ui",
         "build",
         "assets",
