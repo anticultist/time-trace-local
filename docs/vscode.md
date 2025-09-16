@@ -11,10 +11,13 @@ pnpx vsce package
 
 ```shell
 code --install-extension time-trace-local--x.y.z.vsix
+code --install-extension time-trace-local--x.y.z.vsix --force
 ```
 
 ## Preparations for a new version
 
 - bump version in `package.json`
 - update `CHANGELOG.md`
-- Install and test the `vsix` file
+- test the new version
+  - Install `vsix` file
+  - Open developer tools and look for errors and warnings

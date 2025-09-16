@@ -134,7 +134,6 @@ export class DefaultView implements vscode.WebviewViewProvider {
       const scriptUri = this.getUri(webview, this.extensionUri, [
         "dist",
         "webview-ui",
-        "build",
         "assets",
         "index.js",
       ]);

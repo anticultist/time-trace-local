@@ -47,7 +47,7 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "clean": "rimraf dist tsconfig.tsbuildinfo"
+    "clean": "rimraf --glob dist tsconfig.tsbuildinfo \"time-trace-local-*.vsix\""
   },
   "vsce": {
     "dependencies": false

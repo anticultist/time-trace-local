@@ -11,7 +11,7 @@ export default defineConfig({
       targets: [
         // Copy entire webview-ui build directory
         {
-          src: "../webview-ui/build",
+          src: "../webview-ui/build/*",
           dest: "webview-ui",
         },
         // Copy codicons assets
