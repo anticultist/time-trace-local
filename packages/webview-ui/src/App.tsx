@@ -1,5 +1,5 @@
 // Import the VSCode Elements React wrapper components
-import { VscodeButton, VscodeIcon } from "@vscode-elements/react-elements";
+import { VscodeIcon } from "@vscode-elements/react-elements";
 import { useState, useEffect } from "react";
 import type { VsCodeApi } from "./types/vscode";
 import type { Event } from "./types/services";
@@ -19,6 +19,9 @@ export function App({ vscode }: AppProps) {
       if (message.type === "showEvents") {
         setEvents(message.events || []);
         setIsLoading(false);
+      } else if (message.type === "loadingEvents") {
+        setEvents([]);
+        setIsLoading(true);
       }
     };
 
@@ -89,33 +92,9 @@ export function App({ vscode }: AppProps) {
 
     return grouped;
   };
-  const handleRefresh = () => {
-    setIsLoading(true);
-    vscode.postMessage({
-      type: "updateEvents",
-    });
-  };
 
   return (
     <div style={{ fontFamily: "var(--vscode-font-family)" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h1>Time Trace Local</h1>
-        <VscodeButton
-          icon="refresh"
-          onClick={handleRefresh}
-          disabled={isLoading}
-        >
-          Refresh
-        </VscodeButton>
-      </div>
-
       {isLoading && (
         <div
           style={{

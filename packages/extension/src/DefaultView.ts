@@ -23,6 +23,10 @@ export class DefaultView implements vscode.WebviewViewProvider {
     return DefaultView.instance;
   }
 
+  public refreshEvents() {
+    this.sendEvents();
+  }
+
   public dispose() {
     while (this.disposables.length) {
       const disposable = this.disposables.pop();
@@ -79,6 +83,8 @@ export class DefaultView implements vscode.WebviewViewProvider {
     if (!this.view) {
       return;
     }
+
+    this.view.webview.postMessage({ type: "loadingEvents" });
 
     const events = await WindowsEventsService.getEvents();
     if (!events) {

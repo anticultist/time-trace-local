@@ -10,12 +10,25 @@ export function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "time-trace-local" is now active!'
   );
 
-  const defaultView = vscode.window.registerWebviewViewProvider(
-    DefaultView.viewType,
-    DefaultView.getInstance(context.extensionUri, context.extensionMode)
+  const defaultView = DefaultView.getInstance(
+    context.extensionUri,
+    context.extensionMode
   );
 
-  context.subscriptions.push(defaultView);
+  const defaultViewProvider = vscode.window.registerWebviewViewProvider(
+    DefaultView.viewType,
+    defaultView
+  );
+
+  // Register the refresh command
+  const refreshCommand = vscode.commands.registerCommand(
+    "timeTraceLocal.refresh",
+    () => {
+      defaultView.refreshEvents();
+    }
+  );
+
+  context.subscriptions.push(defaultViewProvider, refreshCommand);
 }
 
 // This method is called when your extension is deactivated
