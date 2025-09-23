@@ -87,9 +87,6 @@ export class DefaultView implements vscode.WebviewViewProvider {
     this.view.webview.postMessage({ type: "loadingEvents" });
 
     const events = await WindowsEventsService.getEvents();
-    if (!events) {
-      return;
-    }
     this.view.webview.postMessage({
       type: "showEvents",
       events: events,
