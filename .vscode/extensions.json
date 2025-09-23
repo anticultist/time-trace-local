@@ -6,6 +6,8 @@
     "ms-vscode.extension-test-runner",
     "streetsidesoftware.code-spell-checker",
     "vscode-icons-team.vscode-icons",
-    "esbenp.prettier-vscode"
+    "esbenp.prettier-vscode",
+    "usernamehw.errorlens",
+    "pflannery.vscode-versionlens"
   ]
 }
