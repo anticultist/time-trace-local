@@ -3,6 +3,7 @@ AUTOINCREMENT
 esbuild
 Hashtable
 Janzen
+keytar
 onvsc
 pwsh
 rimraf
