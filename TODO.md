@@ -5,6 +5,7 @@
     - <https://raw.githubusercontent.com/vscode-elements/examples/refs/heads/react-vite/react-vite/src/global.d.ts>
   - <https://gist.github.com/t3dotgg/a486c4ae66d32bf17c09c73609dacc5b>
   - <https://agents.md/>
+  - `vsce package` -> build webview-ui and services package!
 
 - <https://code.visualstudio.com/api/extension-guides/webview>
 - <https://code.visualstudio.com/api/extension-guides/custom-editors>
@@ -27,15 +28,55 @@
   - a/b testing a vs code extension
   - survey
   - [Few Guesses, More Success: 4 Principles to Reduce Cognitive Load in Forms](https://www.nngroup.com/articles/4-principles-reduce-cognitive-load/)
+  - onboarding
+  - paywall
+    - <https://superwall.com/templates>
+    - <https://www.paywallscreens.com/>
 
 - possible features
   - search
   - overtime display (max warning e.g. more than 40h)
   - no breaks
   - custom overview/summery (e.g. last two weeks for a retro)
+  - export (e.g. as brag document)
+  - calender view
 - further reading
   - <https://github.com/microsoft/vscode/issues/249227>
 
 ```ts
 const dbPath = vscode.Uri.joinPath(context.globalStorageUri, 'my-database.sqlite');
+```
+
+```ts
+import * as vscode from 'vscode';
+
+export function activate(context: vscode.ExtensionContext) {
+  // Store a secret (encrypted)
+  await context.secrets.store('apiKey', 'your-secret-api-key');
+  
+  // Retrieve a secret
+  const apiKey = await context.secrets.get('apiKey');
+  
+  // Delete a secret
+  await context.secrets.delete('apiKey');
+  
+  // Listen for secret changes
+  context.secrets.onDidChange(event => {
+    console.log(`Secret ${event.key} was changed`);
+  });
+}
+```
+
+```ts
+export async function authenticate() {
+  // Get existing session or create new one
+  const session = await vscode.authentication.getSession('github', ['repo'], {
+    createIfNone: true
+  });
+  
+  if (session) {
+    console.log('Authenticated as:', session.account.label);
+    console.log('Access token:', session.accessToken);
+  }
+}
 ```

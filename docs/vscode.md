@@ -10,8 +10,8 @@ pnpx vsce package
 ## Test a vsix file
 
 ```shell
-code --install-extension time-trace-local--x.y.z.vsix
-code --install-extension time-trace-local--x.y.z.vsix --force
+code --install-extension time-trace-local-x.y.z.vsix
+code --install-extension time-trace-local-x.y.z.vsix --force
 ```
 
 ## Preparations for a new version
