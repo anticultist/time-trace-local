@@ -74,9 +74,6 @@ export class DefaultView implements vscode.WebviewViewProvider {
       null,
       this.disposables
     );
-
-    // Send initial message to webview with startup text
-    this.sendEvents(); // TODO: <- is this necessary?
   }
 
   private async sendEvents() {
