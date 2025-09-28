@@ -16,8 +16,8 @@ interface RawWindowsEvent {
  * Service for querying Windows Event Logs
  */
 export class WindowsEventsService {
-  private static readonly DEFAULT_EVENT_IDS = WINDOWS_EVENTS.map(
-    (event) => event.windowsEventId
+  private static readonly DEFAULT_EVENT_NAMES = WINDOWS_EVENTS.map(
+    (event) => event.eventName
   );
 
   public static isSupported(): boolean {
@@ -56,7 +56,7 @@ export class WindowsEventsService {
   }
 
   public static async getEvents(
-    eventIds: number[] = WindowsEventsService.DEFAULT_EVENT_IDS,
+    eventNames: string[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
   ): Promise<RawWindowsEvent[] | Event[] | undefined> {
     if (!WindowsEventsService.isSupported()) {
@@ -71,7 +71,7 @@ export class WindowsEventsService {
         return lastWeek;
       })();
     const dateString = date.toISOString().split("T")[0];
-    const eventIdsString = eventIds.join(",");
+    const eventIdsString = eventNames.join(",");
 
     const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${dateString}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 

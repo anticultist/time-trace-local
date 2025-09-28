@@ -8,7 +8,7 @@ export interface Event {
 }
 
 /**
- * Centralized Windows event definitions
+ * Windows event
  */
 export const WINDOWS_EVENTS = [
   {
@@ -58,6 +58,3 @@ export const WINDOWS_EVENTS = [
   //   providerName: "Microsoft-Windows-Power-Troubleshooter",
   // },
 ] as const;
-
-export type WindowsEvent = (typeof WINDOWS_EVENTS)[number];
-export type WindowsEventId = WindowsEvent["windowsEventId"];
