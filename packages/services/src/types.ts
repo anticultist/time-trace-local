@@ -8,12 +8,56 @@ export interface Event {
 }
 
 /**
- * Windows Event Log IDs for system events
+ * Centralized Windows event definitions
  */
-export const WINDOWS_EVENT_IDS = {
-  KERNEL_BOOT: 12, // Kernel general events (OS boot)
-  KERNEL_SHUTDOWN: 13, // Kernel general events (OS shutdown)
-} as const;
+export const WINDOWS_EVENTS = [
+  {
+    eventName: "boot",
+    windowsEventId: 12,
+    providerName: "Microsoft-Windows-Kernel-General",
+  },
+  {
+    eventName: "shutdown",
+    windowsEventId: 13,
+    providerName: "Microsoft-Windows-Kernel-General",
+  },
+  {
+    eventName: "sleep",
+    windowsEventId: 42,
+    providerName: "Microsoft-Windows-Kernel-Power",
+  },
+  {
+    eventName: "logon",
+    windowsEventId: 7001,
+    providerName: "Microsoft-Windows-Winlogon",
+  },
+  {
+    eventName: "logoff",
+    windowsEventId: 7002,
+    providerName: "Microsoft-Windows-Winlogon",
+  },
+  {
+    eventName: "standby",
+    windowsEventId: 507,
+    providerName: "Kernel-Power",
+  },
+  // // TODO: other events
+  // {
+  //   eventName: "sleep",
+  //   windowsEventId: 42,
+  //   providerName: "Microsoft-Windows-Kernel-Power",
+  // },
+  // {
+  //   eventName: "wake_up",
+  //   windowsEventId: 107,
+  //   providerName: "Microsoft-Windows-Kernel-Power",
+  // },
+  // {
+  //   eventName: "troubleshooter_wake",
+  //   windowsEventId: 1,
+  //   providerName: "Microsoft-Windows-Power-Troubleshooter",
+  // },
+] as const;
 
-export type WindowsEventId =
-  (typeof WINDOWS_EVENT_IDS)[keyof typeof WINDOWS_EVENT_IDS];
+export type WindowsEvent = (typeof WINDOWS_EVENTS)[number];
+export type WindowsEventId = WindowsEvent["windowsEventId"];

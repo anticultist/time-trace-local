@@ -1,6 +1,6 @@
 import { execFile } from "child_process";
 import type { Event } from "./types";
-import { WINDOWS_EVENT_IDS } from "./types";
+import { WINDOWS_EVENTS } from "./types";
 
 /**
  * Raw event structure from PowerShell script output
@@ -16,22 +16,19 @@ interface RawWindowsEvent {
  * Service for querying Windows Event Logs
  */
 export class WindowsEventsService {
-  private static readonly DEFAULT_EVENT_IDS = [
-    WINDOWS_EVENT_IDS.KERNEL_BOOT,
-    WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN,
-  ];
+  private static readonly DEFAULT_EVENT_IDS = WINDOWS_EVENTS.map(
+    (event) => event.windowsEventId
+  );
 
   public static isSupported(): boolean {
     return process.platform === "win32";
   }
 
   private static getEventTypeName(eventId: number): string {
-    const eventMap: Record<number, string> = {
-      [WINDOWS_EVENT_IDS.KERNEL_BOOT]: "boot",
-      [WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN]: "shutdown",
-    };
-
-    return eventMap[eventId] || `unknown_event_${eventId}`;
+    const event = WINDOWS_EVENTS.find(
+      (event) => event.windowsEventId === eventId
+    );
+    return event?.eventName || `unknown_event_${eventId}`;
   }
 
   public static convertRawEventsToEvents(
@@ -43,13 +40,12 @@ export class WindowsEventsService {
 
     return rawEvents
       .filter((rawEvent) => {
-        // Only include events with ID 12 or 13 from Kernel-General provider
-        const isValidId =
-          rawEvent.Id === WINDOWS_EVENT_IDS.KERNEL_BOOT ||
-          rawEvent.Id === WINDOWS_EVENT_IDS.KERNEL_SHUTDOWN;
-        const isValidProvider =
-          rawEvent.ProviderName === "Microsoft-Windows-Kernel-General";
-        return isValidId && isValidProvider;
+        const event = WINDOWS_EVENTS.find(
+          (event) =>
+            event.windowsEventId === rawEvent.Id &&
+            event.providerName === rawEvent.ProviderName
+        );
+        return !!event;
       })
       .map((rawEvent) => ({
         time: new Date(rawEvent.TimeCreated).getTime(),
