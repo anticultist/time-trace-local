@@ -22,11 +22,6 @@ export const WINDOWS_EVENTS = [
     providerName: "Microsoft-Windows-Kernel-General",
   },
   {
-    eventName: "sleep",
-    windowsEventId: 42,
-    providerName: "Microsoft-Windows-Kernel-Power",
-  },
-  {
     eventName: "logon",
     windowsEventId: 7001,
     providerName: "Microsoft-Windows-Winlogon",
@@ -37,24 +32,13 @@ export const WINDOWS_EVENTS = [
     providerName: "Microsoft-Windows-Winlogon",
   },
   {
-    eventName: "standby",
-    windowsEventId: 507,
-    providerName: "Kernel-Power",
+    eventName: "standby_enter",
+    windowsEventId: 506,
+    providerName: "Microsoft-Windows-Kernel-Power",
   },
-  // // TODO: other events
-  // {
-  //   eventName: "sleep",
-  //   windowsEventId: 42,
-  //   providerName: "Microsoft-Windows-Kernel-Power",
-  // },
-  // {
-  //   eventName: "wake_up",
-  //   windowsEventId: 107,
-  //   providerName: "Microsoft-Windows-Kernel-Power",
-  // },
-  // {
-  //   eventName: "troubleshooter_wake",
-  //   windowsEventId: 1,
-  //   providerName: "Microsoft-Windows-Power-Troubleshooter",
-  // },
+  {
+    eventName: "standby_exit",
+    windowsEventId: 507,
+    providerName: "Microsoft-Windows-Kernel-Power",
+  },
 ] as const;
