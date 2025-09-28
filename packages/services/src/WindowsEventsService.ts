@@ -24,13 +24,6 @@ export class WindowsEventsService {
     return process.platform === "win32";
   }
 
-  private static getEventTypeName(eventId: number): string {
-    const event = WINDOWS_EVENTS.find(
-      (event) => event.windowsEventId === eventId
-    );
-    return event?.eventName || `unknown_event_${eventId}`;
-  }
-
   public static convertRawEventsToEvents(
     rawEvents: RawWindowsEvent[]
   ): Event[] {
@@ -49,7 +42,10 @@ export class WindowsEventsService {
       })
       .map((rawEvent) => ({
         time: new Date(rawEvent.TimeCreated).getTime(),
-        type: WindowsEventsService.getEventTypeName(rawEvent.Id),
+        type: WindowsEventsService.getEventTypeName(
+          rawEvent.Id,
+          rawEvent.ProviderName
+        ),
         details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
       }))
       .sort((a, b) => b.time - a.time);
@@ -71,7 +67,8 @@ export class WindowsEventsService {
         return lastWeek;
       })();
     const dateString = date.toISOString().split("T")[0];
-    const eventIdsString = eventNames.join(",");
+    const eventIdsString =
+      WindowsEventsService.getEventIdsFromNames(eventNames).join(",");
 
     const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${dateString}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 
@@ -92,6 +89,23 @@ export class WindowsEventsService {
       console.error(errorMessage);
       return;
     }
+  }
+
+  private static getEventTypeName(
+    eventId: number,
+    providerName: string
+  ): string {
+    const event = WINDOWS_EVENTS.find(
+      (event) =>
+        event.windowsEventId === eventId && event.providerName === providerName
+    );
+    return event?.eventName || `unknown_event_${eventId}`;
+  }
+
+  private static getEventIdsFromNames(eventNames: string[]): number[] {
+    return WINDOWS_EVENTS.filter((event) =>
+      eventNames.includes(event.eventName)
+    ).map((event) => event.windowsEventId);
   }
 
   private static runPowerShell(
