@@ -30,12 +30,22 @@
         "command": "timeTraceLocal.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
+      },
+      {
+        "command": "timeTraceLocal.configure",
+        "title": "Configure",
+        "icon": "$(gear)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "timeTraceLocal.refresh",
+          "when": "view == timeTraceLocalDefaultView",
+          "group": "navigation"
+        },
+        {
+          "command": "timeTraceLocal.configure",
           "when": "view == timeTraceLocalDefaultView",
           "group": "navigation"
         }
