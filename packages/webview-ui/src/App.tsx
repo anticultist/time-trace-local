@@ -70,8 +70,10 @@ export function App({ vscode }: AppProps) {
       return "Yesterday";
     }
 
-    // For other dates, use yyyy-mm-dd format
-    return date.toISOString().split("T")[0];
+    // For other dates, use weekday + yyyy-mm-dd format
+    const weekday = date.toLocaleDateString("en-US", { weekday: "long" });
+    const dateString = date.toISOString().split("T")[0];
+    return `${weekday}, ${dateString}`;
   };
 
   const groupEventsByDay = (events: Event[]) => {
