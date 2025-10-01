@@ -54,9 +54,9 @@ export class WindowsEventsService {
   public static async getEvents(
     eventNames: string[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
-  ): Promise<RawWindowsEvent[] | Event[] | undefined> {
+  ): Promise<Event[]> {
     if (!WindowsEventsService.isSupported()) {
-      return;
+      return [];
     }
 
     const date =
@@ -82,12 +82,12 @@ export class WindowsEventsService {
       } catch (parseError) {
         console.error("JSON parsing error:", parseError);
         console.error("Original stdout content:", stdout);
-        return;
+        return [];
       }
     } catch (err: any) {
       const errorMessage = err?.stderr || err?.message || String(err);
       console.error(errorMessage);
-      return;
+      return [];
     }
   }
 

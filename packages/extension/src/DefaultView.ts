@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { WindowsEventsService } from "@time-trace-local/services";
+import { WindowsEventsService, Event } from "@time-trace-local/services";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
@@ -83,7 +83,9 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     this.view.webview.postMessage({ type: "loadingEvents" });
 
-    const events = await WindowsEventsService.getEvents();
+    const events: Event[] = [];
+    events.push(...(await WindowsEventsService.getEvents()));
+    // TODO: add support for mac events
     this.view.webview.postMessage({
       type: "showEvents",
       events: events,
