@@ -44,10 +44,7 @@ export const WINDOWS_EVENTS = [
 ] as const;
 
 /**
- * macOS event configuration with log predicates
- * Using subsystem and category filters to avoid catching debug/internal messages
- *
- * Note: Sleep/Wake events might not fire on desktop Macs that don't sleep regularly
+ * macOS event configuration
  */
 export const MAC_EVENTS = [
   {
@@ -57,31 +54,25 @@ export const MAC_EVENTS = [
   },
   {
     eventName: "shutdown",
-    // Shutdown events are rare and hard to capture reliably
-    // This predicate looks for kernel shutdown messages
     predicate:
-      'processImagePath CONTAINS "kernel" AND eventMessage CONTAINS "SHUTDOWN"',
+      'eventMessage CONTAINS "shutdown UNINITIALIZED -> COMMITTED" AND eventMessage CONTAINS "[Event: shutdown]"',
   },
   {
     eventName: "logon",
-    // LoginComplete is the final state when login finishes successfully
     predicate:
       'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND eventMessage CONTAINS "login state: LoginComplete"',
   },
   {
     eventName: "logoff",
-    // Look for logout-related login states
     predicate:
       'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND (eventMessage CONTAINS "login state: Logout" OR eventMessage CONTAINS "login state: SessionEnd")',
   },
   {
     eventName: "standby_enter",
-    // Desktop Macs may not sleep - this looks for actual sleep start messages
-    predicate: 'process == "kernel" AND eventMessage CONTAINS "sleep reason"',
+    predicate: 'process == "kernel" AND eventMessage == "PMRD: System Sleep"',
   },
   {
     eventName: "standby_exit",
-    // Wake from sleep - look for Wake reason messages from kernel
-    predicate: 'process == "kernel" AND eventMessage CONTAINS "wakereason"',
+    predicate: 'process == "kernel" AND eventMessage == "PMRD: System Wake"',
   },
 ] as const;
