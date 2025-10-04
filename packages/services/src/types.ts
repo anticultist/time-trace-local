@@ -45,35 +45,43 @@ export const WINDOWS_EVENTS = [
 
 /**
  * macOS event configuration with log predicates
+ * Using subsystem and category filters to avoid catching debug/internal messages
+ *
+ * Note: Sleep/Wake events might not fire on desktop Macs that don't sleep regularly
  */
 export const MAC_EVENTS = [
   {
     eventName: "boot",
-    predicate: 'eventMessage CONTAINS "=== system boot:"',
+    predicate:
+      'eventType == "timesyncEvent" AND eventMessage BEGINSWITH "=== system boot:"',
   },
   {
     eventName: "shutdown",
+    // Shutdown events are rare and hard to capture reliably
+    // This predicate looks for kernel shutdown messages
     predicate:
-      'processImagePath CONTAINS "kernel" AND (eventMessage CONTAINS "System shutdown" OR eventMessage CONTAINS "SHUTDOWN_TIME")',
+      'processImagePath CONTAINS "kernel" AND eventMessage CONTAINS "SHUTDOWN"',
   },
   {
     eventName: "logon",
+    // LoginComplete is the final state when login finishes successfully
     predicate:
-      'processImagePath CONTAINS "loginwindow" AND (eventMessage CONTAINS "Login" OR eventMessage CONTAINS "logged in" OR eventMessage CONTAINS "session started")',
+      'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND eventMessage CONTAINS "login state: LoginComplete"',
   },
   {
     eventName: "logoff",
+    // Look for logout-related login states
     predicate:
-      'processImagePath CONTAINS "loginwindow" AND (eventMessage CONTAINS "Logout" OR eventMessage CONTAINS "logged out" OR eventMessage CONTAINS "session ended")',
+      'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND (eventMessage CONTAINS "login state: Logout" OR eventMessage CONTAINS "login state: SessionEnd")',
   },
   {
     eventName: "standby_enter",
-    predicate:
-      '(processImagePath CONTAINS "powerd" OR processImagePath CONTAINS "kernel") AND eventMessage CONTAINS "sleep"',
+    // Desktop Macs may not sleep - this looks for actual sleep start messages
+    predicate: 'process == "kernel" AND eventMessage CONTAINS "sleep reason"',
   },
   {
     eventName: "standby_exit",
-    predicate:
-      '(processImagePath CONTAINS "powerd" OR processImagePath CONTAINS "kernel") AND (eventMessage CONTAINS "Wake" OR eventMessage CONTAINS "wake")',
+    // Wake from sleep - look for Wake reason messages from kernel
+    predicate: 'process == "kernel" AND eventMessage CONTAINS "wakereason"',
   },
 ] as const;
