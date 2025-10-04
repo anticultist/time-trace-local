@@ -32,22 +32,14 @@ export function runCommand(
       {
         maxBuffer: 20 * 1024 * 1024,
         encoding: "utf8",
+        timeout: 60000, // 60 second timeout to prevent hanging
       },
       (error, stdout, stderr) => {
         if (error) {
           // Attach streams to the error for better diagnostics
           (error as any).stdout = stdout;
           (error as any).stderr = stderr;
-          const reason =
-            error instanceof Error
-              ? error
-              : new Error(
-                  (typeof stderr === "string" && stderr.trim()) ||
-                    (typeof (error as any)?.message === "string" &&
-                      (error as any).message) ||
-                    "Command failed"
-                );
-          reject(reason);
+          reject(error);
         } else {
           resolve({ stdout, stderr });
         }
@@ -68,25 +60,20 @@ export class MacEventsService {
     return process.platform === "darwin";
   }
 
-  public static convertRawEventsToEvents(rawEvents: RawMacEvent[]): Event[] {
+  public static convertRawEventsToEvents(
+    rawEvents: RawMacEvent[],
+    eventType: string
+  ): Event[] {
     if (!Array.isArray(rawEvents)) {
       return [];
     }
 
     return rawEvents
-      .map((rawEvent) => {
-        const eventType = MacEventsService.detectEventType(rawEvent);
-        if (!eventType) {
-          return null;
-        }
-
-        return {
-          time: new Date(rawEvent.timestamp).getTime(),
-          type: eventType,
-          details: rawEvent.eventMessage || "No message",
-        };
-      })
-      .filter((event): event is Event => event !== null)
+      .map((rawEvent) => ({
+        time: new Date(rawEvent.timestamp).getTime(),
+        type: eventType,
+        details: rawEvent.eventMessage || "No message",
+      }))
       .sort((a, b) => b.time - a.time);
   }
 
@@ -98,15 +85,27 @@ export class MacEventsService {
       return [];
     }
 
+    // Validate event names
+    const validEventNames: string[] = MAC_EVENTS.map((e) => e.eventName);
+    const invalidNames = eventNames.filter(
+      (name) => !validEventNames.includes(name)
+    );
+    if (invalidNames.length > 0) {
+      throw new Error(
+        `Invalid event names: ${invalidNames.join(", ")}. Valid names are: ${validEventNames.join(", ")}`
+      );
+    }
+
     const date =
       startDate ||
       (() => {
         const lastWeek = new Date();
-        lastWeek.setDate(lastWeek.getDate() - 1);
+        lastWeek.setDate(lastWeek.getDate() - 7);
         return lastWeek;
       })();
 
     const events: Event[] = [];
+    const errors: Array<{ eventName: string; error: Error }> = [];
 
     // Query each event type separately for better performance and accuracy
     for (const eventName of eventNames) {
@@ -118,12 +117,16 @@ export class MacEventsService {
       try {
         const eventResults = await MacEventsService.queryEvents(
           eventConfig.predicate,
+          eventName,
           date
         );
         events.push(...eventResults);
       } catch (err: any) {
-        const errorMessage = err?.stderr || err?.message || String(err);
-        console.error(`Error querying ${eventName} events:`, errorMessage);
+        // Collect errors instead of logging them
+        errors.push({
+          eventName,
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
         // Continue with other events even if one fails
       }
     }
@@ -134,6 +137,7 @@ export class MacEventsService {
 
   private static async queryEvents(
     predicate: string,
+    eventType: string,
     startDate: Date
   ): Promise<Event[]> {
     // Format date as YYYY-MM-DD HH:MM:SS for --start parameter
@@ -165,11 +169,12 @@ export class MacEventsService {
           rawEvents = parsed;
         }
       } catch (parseError) {
-        console.error(`Failed to parse JSON output: ${parseError}`);
-        return [];
+        throw new Error(
+          `Failed to parse JSON output: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+        );
       }
 
-      return MacEventsService.convertRawEventsToEvents(rawEvents);
+      return MacEventsService.convertRawEventsToEvents(rawEvents, eventType);
     } catch (err: any) {
       // If no events found, log command may return error
       // Return empty array instead of throwing
@@ -178,74 +183,5 @@ export class MacEventsService {
       }
       throw err;
     }
-  }
-
-  private static detectEventType(rawEvent: RawMacEvent): string | null {
-    const message = rawEvent.eventMessage?.toLowerCase() || "";
-    // Extract process name from processImagePath (e.g., "/usr/sbin/kernel" -> "kernel")
-    const processPath = rawEvent.processImagePath?.toLowerCase() || "";
-    const process = processPath.split("/").pop() || "";
-
-    // Boot events
-    if (message.includes("=== system boot:")) {
-      return "boot";
-    }
-
-    // Shutdown events
-    if (
-      (process === "kernel" &&
-        (message.includes("shutdown") || message.includes("shutdown_time"))) ||
-      message.includes("system shutdown")
-    ) {
-      return "shutdown";
-    }
-
-    // Login events
-    if (
-      process === "loginwindow" &&
-      (message.includes("login") ||
-        message.includes("logged in") ||
-        message.includes("session started"))
-    ) {
-      // Filter out logout-related messages
-      if (
-        !message.includes("logout") &&
-        !message.includes("logged out") &&
-        !message.includes("session ended")
-      ) {
-        return "logon";
-      }
-    }
-
-    // Logout events
-    if (
-      process === "loginwindow" &&
-      (message.includes("logout") ||
-        message.includes("logged out") ||
-        message.includes("session ended"))
-    ) {
-      return "logoff";
-    }
-
-    // Sleep events
-    if (
-      (process === "powerd" || process === "kernel") &&
-      (message.includes("entering sleep state") || message.includes("sleep"))
-    ) {
-      // Filter out wake-related messages
-      if (!message.includes("wake")) {
-        return "standby_enter";
-      }
-    }
-
-    // Wake events
-    if (
-      (process === "powerd" || process === "kernel") &&
-      message.includes("wake")
-    ) {
-      return "standby_exit";
-    }
-
-    return null;
   }
 }
