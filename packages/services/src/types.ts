@@ -42,3 +42,38 @@ export const WINDOWS_EVENTS = [
     providerName: "Microsoft-Windows-Kernel-Power",
   },
 ] as const;
+
+/**
+ * macOS event configuration with log predicates
+ */
+export const MAC_EVENTS = [
+  {
+    eventName: "boot",
+    predicate: 'eventMessage CONTAINS "=== system boot:"',
+  },
+  {
+    eventName: "shutdown",
+    predicate:
+      'processImagePath CONTAINS "kernel" AND (eventMessage CONTAINS "System shutdown" OR eventMessage CONTAINS "SHUTDOWN_TIME")',
+  },
+  {
+    eventName: "logon",
+    predicate:
+      'processImagePath CONTAINS "loginwindow" AND (eventMessage CONTAINS "Login" OR eventMessage CONTAINS "logged in" OR eventMessage CONTAINS "session started")',
+  },
+  {
+    eventName: "logoff",
+    predicate:
+      'processImagePath CONTAINS "loginwindow" AND (eventMessage CONTAINS "Logout" OR eventMessage CONTAINS "logged out" OR eventMessage CONTAINS "session ended")',
+  },
+  {
+    eventName: "standby_enter",
+    predicate:
+      '(processImagePath CONTAINS "powerd" OR processImagePath CONTAINS "kernel") AND eventMessage CONTAINS "sleep"',
+  },
+  {
+    eventName: "standby_exit",
+    predicate:
+      '(processImagePath CONTAINS "powerd" OR processImagePath CONTAINS "kernel") AND (eventMessage CONTAINS "Wake" OR eventMessage CONTAINS "wake")',
+  },
+] as const;
