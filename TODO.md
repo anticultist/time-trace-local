@@ -22,6 +22,7 @@
   - illustrations
   - micro animation
     - [The Art of Microinteractions: Enhancing User Experience One Detail at a Time](https://artversion.com/blog/the-art-of-microinteractions-enhancing-user-experience-one-detail-at-a-time/)
+    - <https://reactbits.dev/>
   - Onboarding
     - inside the app or link to a youtube video
   - visual language (color psychology)
@@ -40,6 +41,7 @@
   - custom overview/summery (e.g. last two weeks for a retro)
   - export (e.g. as brag document)
   - calender view
+  - hide certain events (reboot of a system, threshold for events)
 - further reading
   - <https://github.com/microsoft/vscode/issues/249227>
 
@@ -80,3 +82,17 @@ export async function authenticate() {
   }
 }
 ```
+
+## Sleep / Wake up
+
+- Microsoft-Windows-Kernel-General
+  - KERNEL_BOOT: 12, // Kernel general events (OS boot)
+  - KERNEL_SHUTDOWN: 13, // Kernel general events (OS shutdown)
+- Microsoft-Windows-Kernel-Power
+  - KERNEL_POWER_SLEEP: 42, // System entering sleep/standby mode
+  - KERNEL_POWER_WAKE: 107, // System waking from sleep/standby mode
+- Microsoft-Windows-Power-Troubleshooter
+  - POWER_TROUBLESHOOTER_WAKE: 1, // Power troubleshooter wake event with details
+- Microsoft-Windows-Winlogon
+  - USER_LOGON: 7001, // User logon notification
+  - USER_LOGOFF: 7002, // User logoff notification

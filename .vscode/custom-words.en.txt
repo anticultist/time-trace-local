@@ -3,9 +3,11 @@ AUTOINCREMENT
 BEGINSWITH
 esbuild
 Hashtable
+hashtables
 iokit
 Janzen
 keytar
+libsql
 loginwindow
 Microinteractions
 onvsc
@@ -17,6 +19,7 @@ riscv
 rollup
 timesync
 vite
+vitejs
 wakereason
 Winlogon
 yarnrc
