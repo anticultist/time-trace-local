@@ -164,6 +164,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   const defaultView = DefaultView.getInstance(
     context.extensionUri,
+    context.globalStorageUri,
     context.extensionMode
   );
 

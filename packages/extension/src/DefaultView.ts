@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   WindowsEventsService,
   MacEventsService,
@@ -9,20 +10,30 @@ export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
   private static instance: DefaultView;
   private readonly disposables: vscode.Disposable[] = [];
+  private readonly db: LibSQLDatabase;
 
   private view?: vscode.WebviewView;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
+    private readonly globalStorageUri: vscode.Uri,
     private readonly extensionMode: vscode.ExtensionMode
-  ) {}
+  ) {
+    const dbPath = vscode.Uri.joinPath(this.globalStorageUri, "events.db");
+    this.db = drizzle({ connection: { url: `file:${dbPath.fsPath}` } });
+  }
 
   public static getInstance(
     extensionUri: vscode.Uri,
+    globalStorageUri: vscode.Uri,
     extensionMode: vscode.ExtensionMode
   ): DefaultView {
     if (!DefaultView.instance) {
-      DefaultView.instance = new DefaultView(extensionUri, extensionMode);
+      DefaultView.instance = new DefaultView(
+        extensionUri,
+        globalStorageUri,
+        extensionMode
+      );
     }
     return DefaultView.instance;
   }
