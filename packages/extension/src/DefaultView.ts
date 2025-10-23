@@ -5,6 +5,9 @@ import {
   MacEventsService,
   Event,
 } from "@time-trace-local/services";
+import { runMigrations } from "./db";
+import * as fs from "fs";
+import * as path from "path";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
@@ -19,23 +22,44 @@ export class DefaultView implements vscode.WebviewViewProvider {
     private readonly globalStorageUri: vscode.Uri,
     private readonly extensionMode: vscode.ExtensionMode
   ) {
+    // Ensure the globalStorage directory exists before creating the database
+    const storageDir = this.globalStorageUri.fsPath;
+    if (!fs.existsSync(storageDir)) {
+      fs.mkdirSync(storageDir, { recursive: true });
+    }
+
     const dbPath = vscode.Uri.joinPath(this.globalStorageUri, "events.db");
     this.db = drizzle({ connection: { url: `file:${dbPath.fsPath}` } });
   }
 
-  public static getInstance(
+  public static async getInstance(
     extensionUri: vscode.Uri,
     globalStorageUri: vscode.Uri,
     extensionMode: vscode.ExtensionMode
-  ): DefaultView {
+  ): Promise<DefaultView> {
     if (!DefaultView.instance) {
       DefaultView.instance = new DefaultView(
         extensionUri,
         globalStorageUri,
         extensionMode
       );
+      // Initialize database after construction
+      await DefaultView.instance.initializeDatabase();
     }
     return DefaultView.instance;
+  }
+
+  private async initializeDatabase(): Promise<void> {
+    try {
+      await runMigrations(this.db, this.extensionUri);
+      console.log("Database initialized successfully");
+    } catch (error) {
+      console.error("Failed to initialize database:", error);
+      vscode.window.showErrorMessage(
+        `Failed to initialize Time Trace database: ${error instanceof Error ? error.message : String(error)}`
+      );
+      throw error;
+    }
   }
 
   public refreshEvents() {
@@ -99,8 +123,10 @@ export class DefaultView implements vscode.WebviewViewProvider {
     this.view.webview.postMessage({ type: "loadingEvents" });
 
     const events: Event[] = [];
-    events.push(...(await WindowsEventsService.getEvents()));
-    events.push(...(await MacEventsService.getEvents()));
+    events.push(
+      ...(await WindowsEventsService.getEvents()),
+      ...(await MacEventsService.getEvents())
+    );
     this.view.webview.postMessage({
       type: "showEvents",
       events: events,

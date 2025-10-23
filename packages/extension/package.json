@@ -84,7 +84,8 @@
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vscode-test",
-    "clean": "rimraf --glob dist tsconfig.tsbuildinfo \"time-trace-local-*.vsix\""
+    "clean": "rimraf --glob dist tsconfig.tsbuildinfo \"time-trace-local-*.vsix\"",
+    "db:generate": "drizzle-kit generate"
   },
   "vsce": {
     "dependencies": false

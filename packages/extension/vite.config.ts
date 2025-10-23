@@ -23,6 +23,11 @@ export default defineConfig({
           src: "node_modules/@vscode/codicons/dist/codicon.ttf",
           dest: "assets",
         },
+        // Copy database migrations
+        {
+          src: "src/db/migrations",
+          dest: "db",
+        },
       ],
     }),
   ],
