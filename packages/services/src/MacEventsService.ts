@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import type { Event, EventService } from "./api";
+import type { Event, EventService, EventType } from "./api";
 
 /**
  * Raw event structure from macOS log show JSON output
@@ -15,7 +15,7 @@ interface RawMacEvent {
 }
 
 /**
- * macOS event configuration
+ * MacOS event configuration
  */
 export const MAC_EVENTS = [
   {
@@ -87,7 +87,7 @@ export function runCommand(
  * Service for querying macOS unified logging system
  */
 export class MacEventsService implements EventService {
-  private static readonly DEFAULT_EVENT_NAMES = MAC_EVENTS.map(
+  private static readonly DEFAULT_EVENT_NAMES: EventType[] = MAC_EVENTS.map(
     (event) => event.eventName
   );
 
@@ -96,7 +96,7 @@ export class MacEventsService implements EventService {
   }
 
   public async getEvents(
-    eventNames: string[] = MacEventsService.DEFAULT_EVENT_NAMES,
+    eventNames: EventType[] = MacEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
   ): Promise<Event[]> {
     if (!this.isSupported()) {
@@ -132,6 +132,7 @@ export class MacEventsService implements EventService {
       }
 
       try {
+        // TODO: measure time taken for each query
         const eventResults = await this.queryEvents(
           eventConfig.predicate,
           eventName,
@@ -153,7 +154,7 @@ export class MacEventsService implements EventService {
 
   private async queryEvents(
     predicate: string,
-    eventType: string,
+    eventType: EventType,
     startDate: Date
   ): Promise<Event[]> {
     // Format date as YYYY-MM-DD HH:MM:SS for --start parameter
@@ -203,7 +204,7 @@ export class MacEventsService implements EventService {
 
   public convertRawEventsToEvents(
     rawEvents: RawMacEvent[],
-    eventType: string
+    eventType: EventType
   ): Event[] {
     if (!Array.isArray(rawEvents)) {
       return [];

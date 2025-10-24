@@ -1,9 +1,17 @@
+export type EventType =
+  | "boot"
+  | "shutdown"
+  | "logon"
+  | "logoff"
+  | "standby_enter"
+  | "standby_exit";
+
 /**
  * Represents an event
  */
 export interface Event {
   time: number;
-  type: string;
+  type: EventType;
   details: string;
 }
 
@@ -12,5 +20,5 @@ export interface Event {
  */
 export interface EventService {
   isSupported(): boolean;
-  getEvents(eventNames?: string[], startDate?: Date): Promise<Event[]>;
+  getEvents(eventNames?: EventType[], startDate?: Date): Promise<Event[]>;
 }
