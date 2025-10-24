@@ -1,4 +1,4 @@
-import { execFile } from "child_process";
+import { execFile } from "node:child_process";
 import type { Event, EventService } from "./api";
 
 /**
@@ -70,9 +70,11 @@ export function runCommand(
       (error, stdout, stderr) => {
         if (error) {
           // Attach streams to the error for better diagnostics
-          (error as any).stdout = stdout;
-          (error as any).stderr = stderr;
-          reject(error);
+          error.stdout = stdout;
+          error.stderr = stderr;
+          reject(
+            error instanceof Error ? error : new Error(JSON.stringify(error))
+          );
         } else {
           resolve({ stdout, stderr });
         }
