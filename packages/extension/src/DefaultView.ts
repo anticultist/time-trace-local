@@ -8,7 +8,6 @@ import {
 } from "@time-trace-local/services";
 import { runMigrations } from "./db";
 import * as fs from "fs";
-import * as path from "path";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";

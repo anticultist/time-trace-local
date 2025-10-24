@@ -1,5 +1,5 @@
 /**
- * Represents a Windows event with simplified structure
+ * Represents an event
  */
 export interface Event {
   time: number;
@@ -7,6 +7,9 @@ export interface Event {
   details: string;
 }
 
+/**
+ * A service fetching events
+ */
 export interface EventService {
   isSupported(): boolean;
   getEvents(eventNames?: string[], startDate?: Date): Promise<Event[]>;

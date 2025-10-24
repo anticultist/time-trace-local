@@ -93,23 +93,6 @@ export class MacEventsService implements EventService {
     return process.platform === "darwin";
   }
 
-  public static convertRawEventsToEvents(
-    rawEvents: RawMacEvent[],
-    eventType: string
-  ): Event[] {
-    if (!Array.isArray(rawEvents)) {
-      return [];
-    }
-
-    return rawEvents
-      .map((rawEvent) => ({
-        time: new Date(rawEvent.timestamp).getTime(),
-        type: eventType,
-        details: rawEvent.eventMessage || "No message",
-      }))
-      .sort((a, b) => b.time - a.time);
-  }
-
   public async getEvents(
     eventNames: string[] = MacEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
@@ -138,7 +121,6 @@ export class MacEventsService implements EventService {
       })();
 
     const events: Event[] = [];
-    const errors: Array<{ eventName: string; error: Error }> = [];
 
     // Query each event type separately for better performance and accuracy
     for (const eventName of eventNames) {
@@ -148,19 +130,18 @@ export class MacEventsService implements EventService {
       }
 
       try {
-        const eventResults = await MacEventsService.queryEvents(
+        const eventResults = await this.queryEvents(
           eventConfig.predicate,
           eventName,
           date
         );
         events.push(...eventResults);
       } catch (err: any) {
-        // Collect errors instead of logging them
-        errors.push({
-          eventName,
-          error: err instanceof Error ? err : new Error(String(err)),
-        });
-        // Continue with other events even if one fails
+        console.error(
+          `Error querying macOS events for ${eventName}: ${
+            err instanceof Error ? err.message : String(err)
+          }`
+        );
       }
     }
 
@@ -168,7 +149,7 @@ export class MacEventsService implements EventService {
     return events.sort((a, b) => b.time - a.time);
   }
 
-  private static async queryEvents(
+  private async queryEvents(
     predicate: string,
     eventType: string,
     startDate: Date
@@ -207,7 +188,7 @@ export class MacEventsService implements EventService {
         );
       }
 
-      return MacEventsService.convertRawEventsToEvents(rawEvents, eventType);
+      return this.convertRawEventsToEvents(rawEvents, eventType);
     } catch (err: any) {
       // If no events found, log command may return error
       // Return empty array instead of throwing
@@ -216,5 +197,22 @@ export class MacEventsService implements EventService {
       }
       throw err;
     }
+  }
+
+  public convertRawEventsToEvents(
+    rawEvents: RawMacEvent[],
+    eventType: string
+  ): Event[] {
+    if (!Array.isArray(rawEvents)) {
+      return [];
+    }
+
+    return rawEvents
+      .map((rawEvent) => ({
+        time: new Date(rawEvent.timestamp).getTime(),
+        type: eventType,
+        details: rawEvent.eventMessage || "No message",
+      }))
+      .sort((a, b) => b.time - a.time);
   }
 }

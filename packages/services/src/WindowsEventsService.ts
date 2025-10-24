@@ -48,7 +48,7 @@ export const WINDOWS_EVENTS = [
 ] as const;
 
 /**
- * Service for querying Windows Event Logs
+ * Service for querying Windows event logs
  */
 export class WindowsEventsService implements EventService {
   private static readonly DEFAULT_EVENT_NAMES = WINDOWS_EVENTS.map(
@@ -57,33 +57,6 @@ export class WindowsEventsService implements EventService {
 
   public isSupported(): boolean {
     return process.platform === "win32";
-  }
-
-  public static convertRawEventsToEvents(
-    rawEvents: RawWindowsEvent[]
-  ): Event[] {
-    if (!Array.isArray(rawEvents)) {
-      return [];
-    }
-
-    return rawEvents
-      .filter((rawEvent) => {
-        const event = WINDOWS_EVENTS.find(
-          (event) =>
-            event.windowsEventId === rawEvent.Id &&
-            event.providerName === rawEvent.ProviderName
-        );
-        return !!event;
-      })
-      .map((rawEvent) => ({
-        time: new Date(rawEvent.TimeCreated).getTime(),
-        type: WindowsEventsService.getEventTypeName(
-          rawEvent.Id,
-          rawEvent.ProviderName
-        ),
-        details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
-      }))
-      .sort((a, b) => b.time - a.time);
   }
 
   // TODO: update startDate
@@ -104,18 +77,17 @@ export class WindowsEventsService implements EventService {
       startTimeString = lastWeek.toISOString();
     }
 
-    const eventIdsString =
-      WindowsEventsService.getEventIdsFromNames(eventNames).join(",");
+    const eventIdsString = this.getEventIdsFromNames(eventNames).join(",");
 
     const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${startTimeString}'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 
     try {
-      const { stdout } = await WindowsEventsService.runPowerShell(script);
+      const { stdout } = await this.runPowerShell(script);
 
       try {
         const rawEvents = JSON.parse(stdout);
 
-        return WindowsEventsService.convertRawEventsToEvents(rawEvents);
+        return this.convertRawEventsToEvents(rawEvents);
       } catch (parseError) {
         console.error("JSON parsing error:", parseError);
         console.error("Original stdout content:", stdout);
@@ -128,10 +100,29 @@ export class WindowsEventsService implements EventService {
     }
   }
 
-  private static getEventTypeName(
-    eventId: number,
-    providerName: string
-  ): string {
+  public convertRawEventsToEvents(rawEvents: RawWindowsEvent[]): Event[] {
+    if (!Array.isArray(rawEvents)) {
+      return [];
+    }
+
+    return rawEvents
+      .filter((rawEvent) => {
+        const event = WINDOWS_EVENTS.find(
+          (event) =>
+            event.windowsEventId === rawEvent.Id &&
+            event.providerName === rawEvent.ProviderName
+        );
+        return !!event;
+      })
+      .map((rawEvent) => ({
+        time: new Date(rawEvent.TimeCreated).getTime(),
+        type: this.getEventTypeName(rawEvent.Id, rawEvent.ProviderName),
+        details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
+      }))
+      .sort((a, b) => b.time - a.time);
+  }
+
+  private getEventTypeName(eventId: number, providerName: string): string {
     const event = WINDOWS_EVENTS.find(
       (event) =>
         event.windowsEventId === eventId && event.providerName === providerName
@@ -139,13 +130,13 @@ export class WindowsEventsService implements EventService {
     return event?.eventName || `unknown_event_${eventId}`;
   }
 
-  private static getEventIdsFromNames(eventNames: string[]): number[] {
+  private getEventIdsFromNames(eventNames: string[]): number[] {
     return WINDOWS_EVENTS.filter((event) =>
       eventNames.includes(event.eventName)
     ).map((event) => event.windowsEventId);
   }
 
-  private static runPowerShell(
+  private runPowerShell(
     script: string
   ): Promise<{ stdout: string; stderr: string }> {
     const args = [
