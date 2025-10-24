@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import type { Event } from "./types";
+import type { Event } from "./api";
 
 /**
  * Raw event structure from macOS log show JSON output
