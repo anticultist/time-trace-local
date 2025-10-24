@@ -28,7 +28,7 @@ export type EventType =
 
 export const events = sqliteTable("events", {
   id: int().primaryKey({ autoIncrement: true }),
-  time: int().notNull(),
+  time: int({ mode: "timestamp" }).notNull(),
   type: text().notNull().$type<EventType>(),
   details: text().notNull(),
 });
