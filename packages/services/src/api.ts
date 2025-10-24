@@ -6,3 +6,8 @@ export interface Event {
   type: string;
   details: string;
 }
+
+export interface EventService {
+  isSupported(): boolean;
+  getEvents(eventNames?: string[], startDate?: Date): Promise<Event[]>;
+}

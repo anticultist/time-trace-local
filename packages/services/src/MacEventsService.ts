@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import type { Event } from "./api";
+import type { Event, EventService } from "./api";
 
 /**
  * Raw event structure from macOS log show JSON output
@@ -84,12 +84,12 @@ export function runCommand(
 /**
  * Service for querying macOS unified logging system
  */
-export class MacEventsService {
+export class MacEventsService implements EventService {
   private static readonly DEFAULT_EVENT_NAMES = MAC_EVENTS.map(
     (event) => event.eventName
   );
 
-  public static isSupported(): boolean {
+  public isSupported(): boolean {
     return process.platform === "darwin";
   }
 
@@ -110,11 +110,11 @@ export class MacEventsService {
       .sort((a, b) => b.time - a.time);
   }
 
-  public static async getEvents(
+  public async getEvents(
     eventNames: string[] = MacEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
   ): Promise<Event[]> {
-    if (!MacEventsService.isSupported()) {
+    if (!this.isSupported()) {
       return [];
     }
 

@@ -4,6 +4,7 @@ import {
   WindowsEventsService,
   MacEventsService,
   Event,
+  EventService,
 } from "@time-trace-local/services";
 import { runMigrations } from "./db";
 import * as fs from "fs";
@@ -11,9 +12,14 @@ import * as path from "path";
 
 export class DefaultView implements vscode.WebviewViewProvider {
   public static readonly viewType = "timeTraceLocalDefaultView";
+
   private static instance: DefaultView;
   private readonly disposables: vscode.Disposable[] = [];
   private readonly db: LibSQLDatabase;
+  private readonly eventServices: EventService[] = [
+    new WindowsEventsService(),
+    new MacEventsService(),
+  ];
 
   private view?: vscode.WebviewView;
 
@@ -124,9 +130,10 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     // TODO: save events in db
     const events: Event[] = [];
-    events.push(
-      ...(await WindowsEventsService.getEvents()),
-      ...(await MacEventsService.getEvents())
+    await Promise.all(
+      this.eventServices.map(async (service) => {
+        events.push(...(await service.getEvents()));
+      })
     );
     this.view.webview.postMessage({
       type: "showEvents",

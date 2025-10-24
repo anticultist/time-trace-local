@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import type { Event } from "./api";
+import type { Event, EventService } from "./api";
 
 /**
  * Raw event structure from PowerShell script output
@@ -50,12 +50,12 @@ export const WINDOWS_EVENTS = [
 /**
  * Service for querying Windows Event Logs
  */
-export class WindowsEventsService {
+export class WindowsEventsService implements EventService {
   private static readonly DEFAULT_EVENT_NAMES = WINDOWS_EVENTS.map(
     (event) => event.eventName
   );
 
-  public static isSupported(): boolean {
+  public isSupported(): boolean {
     return process.platform === "win32";
   }
 
@@ -87,11 +87,11 @@ export class WindowsEventsService {
   }
 
   // TODO: update startDate
-  public static async getEvents(
+  public async getEvents(
     eventNames: string[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
     startTime?: Date
   ): Promise<Event[]> {
-    if (!WindowsEventsService.isSupported()) {
+    if (!this.isSupported()) {
       return [];
     }
 
