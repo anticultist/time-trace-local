@@ -7,6 +7,8 @@ import {
   EventService,
 } from "@time-trace-local/services";
 import { runMigrations } from "./db";
+import { events } from "./db/schema";
+import { and, eq } from "drizzle-orm";
 import * as fs from "fs";
 
 export class DefaultView implements vscode.WebviewViewProvider {
@@ -120,6 +122,54 @@ export class DefaultView implements vscode.WebviewViewProvider {
     );
   }
 
+  private async saveEventsToDatabase(newEvents: Event[]): Promise<void> {
+    if (newEvents.length === 0) {
+      return;
+    }
+
+    try {
+      // Filter out duplicates by checking existing events with same time and type
+      const uniqueEvents: Event[] = [];
+
+      for (const event of newEvents) {
+        const existingEvent = await this.db
+          .select()
+          .from(events)
+          .where(
+            and(
+              eq(events.time, new Date(event.time)),
+              eq(events.type, event.type)
+            )
+          )
+          .limit(1);
+
+        if (existingEvent.length === 0) {
+          uniqueEvents.push(event);
+        }
+      }
+
+      if (uniqueEvents.length === 0) {
+        console.log("No new events to insert (all were duplicates)");
+        return;
+      }
+
+      // Insert all unique events in a batch
+      await this.db.insert(events).values(
+        uniqueEvents.map((event) => ({
+          time: new Date(event.time),
+          type: event.type,
+          details: event.details,
+        }))
+      );
+      console.log(`Inserted ${uniqueEvents.length} new events into database`);
+    } catch (error) {
+      console.error("Failed to save events to database:", error);
+      vscode.window.showErrorMessage(
+        `Failed to save events: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
   private async sendEvents() {
     if (!this.view) {
       return;
@@ -127,16 +177,19 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     this.view.webview.postMessage({ type: "loadingEvents" });
 
-    // TODO: save events in db
-    const events: Event[] = [];
+    const newEvents: Event[] = [];
     await Promise.all(
       this.eventServices.map(async (service) => {
-        events.push(...(await service.getEvents()));
+        // TODO: update startDate
+        newEvents.push(...(await service.getEvents()));
       })
     );
+
+    await this.saveEventsToDatabase(newEvents);
+
     this.view.webview.postMessage({
       type: "showEvents",
-      events: events,
+      events: newEvents,
     });
   }
 
