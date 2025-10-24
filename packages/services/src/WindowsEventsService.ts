@@ -1,6 +1,5 @@
 import { execFile } from "child_process";
 import type { Event } from "./types";
-import { WINDOWS_EVENTS } from "./types";
 
 /**
  * Raw event structure from PowerShell script output
@@ -11,6 +10,42 @@ interface RawWindowsEvent {
   ProviderName: string;
   Message: string;
 }
+
+/**
+ * Windows event
+ */
+export const WINDOWS_EVENTS = [
+  {
+    eventName: "boot",
+    windowsEventId: 12,
+    providerName: "Microsoft-Windows-Kernel-General",
+  },
+  {
+    eventName: "shutdown",
+    windowsEventId: 13,
+    providerName: "Microsoft-Windows-Kernel-General",
+  },
+  {
+    eventName: "logon",
+    windowsEventId: 7001,
+    providerName: "Microsoft-Windows-Winlogon",
+  },
+  {
+    eventName: "logoff",
+    windowsEventId: 7002,
+    providerName: "Microsoft-Windows-Winlogon",
+  },
+  {
+    eventName: "standby_enter",
+    windowsEventId: 506,
+    providerName: "Microsoft-Windows-Kernel-Power",
+  },
+  {
+    eventName: "standby_exit",
+    windowsEventId: 507,
+    providerName: "Microsoft-Windows-Kernel-Power",
+  },
+] as const;
 
 /**
  * Service for querying Windows Event Logs
@@ -51,26 +86,28 @@ export class WindowsEventsService {
       .sort((a, b) => b.time - a.time);
   }
 
+  // TODO: update startDate
   public static async getEvents(
     eventNames: string[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
-    startDate?: Date
+    startTime?: Date
   ): Promise<Event[]> {
     if (!WindowsEventsService.isSupported()) {
       return [];
     }
 
-    const date =
-      startDate ||
-      (() => {
-        const lastWeek = new Date();
-        lastWeek.setDate(lastWeek.getDate() - 7);
-        return lastWeek;
-      })();
-    const dateString = date.toISOString().split("T")[0];
+    var startTimeString;
+    if (startTime) {
+      startTimeString = startTime.toISOString();
+    } else {
+      const lastWeek = new Date();
+      lastWeek.setDate(lastWeek.getDate() - 7);
+      startTimeString = lastWeek.toISOString();
+    }
+
     const eventIdsString =
       WindowsEventsService.getEventIdsFromNames(eventNames).join(",");
 
-    const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${dateString}T00:00:00'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
+    const script = `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-WinEvent -FilterHashtable @{LogName='System';Id=${eventIdsString};StartTime='${startTimeString}'} | Select-Object TimeCreated, Id, ProviderName, Message | ConvertTo-Json`;
 
     try {
       const { stdout } = await WindowsEventsService.runPowerShell(script);

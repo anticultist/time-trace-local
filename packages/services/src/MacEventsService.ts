@@ -1,6 +1,5 @@
 import { execFile } from "child_process";
 import type { Event } from "./types";
-import { MAC_EVENTS } from "./types";
 
 /**
  * Raw event structure from macOS log show JSON output
@@ -14,6 +13,40 @@ interface RawMacEvent {
   category?: string;
   messageType?: string;
 }
+
+/**
+ * macOS event configuration
+ */
+export const MAC_EVENTS = [
+  {
+    eventName: "boot",
+    predicate:
+      'eventType == "timesyncEvent" AND eventMessage BEGINSWITH "=== system boot:"',
+  },
+  {
+    eventName: "shutdown",
+    predicate:
+      'eventMessage CONTAINS "shutdown UNINITIALIZED -> COMMITTED" AND eventMessage CONTAINS "[Event: shutdown]"',
+  },
+  {
+    eventName: "logon",
+    predicate:
+      'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND eventMessage CONTAINS "login state: LoginComplete"',
+  },
+  {
+    eventName: "logoff",
+    predicate:
+      'subsystem == "com.apple.loginwindow.logging" AND category == "KeyMilestone" AND (eventMessage CONTAINS "login state: Logout" OR eventMessage CONTAINS "login state: SessionEnd")',
+  },
+  {
+    eventName: "standby_enter",
+    predicate: 'process == "kernel" AND eventMessage == "PMRD: System Sleep"',
+  },
+  {
+    eventName: "standby_exit",
+    predicate: 'process == "kernel" AND eventMessage == "PMRD: System Wake"',
+  },
+] as const;
 
 /**
  * Executes a command using execFile and returns stdout/stderr
