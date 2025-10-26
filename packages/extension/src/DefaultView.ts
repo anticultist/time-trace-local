@@ -7,8 +7,8 @@ import {
   EventService,
 } from "@time-trace-local/services";
 import { runMigrations } from "./db";
-import { events } from "./db/schema";
-import { and, eq } from "drizzle-orm";
+import { events, dbProperties, PropertyType } from "./db/schema";
+import { and, eq, gte } from "drizzle-orm";
 import * as fs from "fs";
 
 export class DefaultView implements vscode.WebviewViewProvider {
@@ -170,6 +170,109 @@ export class DefaultView implements vscode.WebviewViewProvider {
     }
   }
 
+  private async getLastFetchTime(
+    serviceName: string
+  ): Promise<Date | undefined> {
+    try {
+      const propertyName = `${serviceName}.lastFetchTime`;
+      const result = await this.db
+        .select()
+        .from(dbProperties)
+        .where(eq(dbProperties.name, propertyName))
+        .limit(1);
+
+      if (result.length > 0 && typeof result[0].value === "number") {
+        return new Date(result[0].value);
+      }
+      return undefined;
+    } catch (error) {
+      console.error(`Failed to get last fetch time for ${serviceName}:`, error);
+      return undefined;
+    }
+  }
+
+  private async saveLastFetchTime(
+    serviceName: string,
+    timestamp: number
+  ): Promise<void> {
+    try {
+      const propertyName = `${serviceName}.lastFetchTime`;
+
+      // Check if property exists
+      const existing = await this.db
+        .select()
+        .from(dbProperties)
+        .where(eq(dbProperties.name, propertyName))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Update existing property
+        await this.db
+          .update(dbProperties)
+          .set({ value: timestamp })
+          .where(eq(dbProperties.name, propertyName));
+      } else {
+        // Insert new property
+        await this.db.insert(dbProperties).values({
+          name: propertyName,
+          type: PropertyType.Integer,
+          value: timestamp,
+        });
+      }
+
+      console.log(
+        `Saved last fetch time for ${serviceName}: ${new Date(timestamp).toISOString()}`
+      );
+    } catch (error) {
+      console.error(
+        `Failed to save last fetch time for ${serviceName}:`,
+        error
+      );
+    }
+  }
+
+  private async getStoredEvents(startDate: Date): Promise<Event[]> {
+    try {
+      const storedEvents = await this.db
+        .select()
+        .from(events)
+        .where(gte(events.time, startDate))
+        .orderBy(events.time);
+
+      return storedEvents.map((event) => ({
+        time: event.time.getTime(),
+        type: event.type,
+        details: event.details,
+      }));
+    } catch (error) {
+      console.error("Failed to retrieve stored events:", error);
+      return [];
+    }
+  }
+
+  private async getEventsForService(service: EventService): Promise<Event[]> {
+    // Fetch last fetch time from db_properties per service and use as startDate
+    const lastFetchTime = await this.getLastFetchTime(service.name);
+    const startDate =
+      lastFetchTime ||
+      (() => {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        return sevenDaysAgo;
+      })();
+
+    const newEvents: Event[] = await service.getEvents(undefined, startDate);
+    await this.saveEventsToDatabase(newEvents);
+
+    // Save the timestamp of the most recent event retrieved
+    if (newEvents.length > 0) {
+      const mostRecentTimestamp = Math.max(...newEvents.map((e) => e.time));
+      await this.saveLastFetchTime(service.name, mostRecentTimestamp);
+    }
+
+    return newEvents;
+  }
+
   private async sendEvents() {
     if (!this.view) {
       return;
@@ -177,19 +280,42 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     this.view.webview.postMessage({ type: "loadingEvents" });
 
+    // Fetch new events from all services
     const newEvents: Event[] = [];
     await Promise.all(
       this.eventServices.map(async (service) => {
-        // TODO: update startDate
-        newEvents.push(...(await service.getEvents()));
+        newEvents.push(...(await this.getEventsForService(service)));
       })
     );
 
-    await this.saveEventsToDatabase(newEvents);
+    // Get older events from database to fill gaps (max 7 days back)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const storedEvents = await this.getStoredEvents(sevenDaysAgo);
+
+    // Combine stored events with new events and remove duplicates
+    const allEventsMap = new Map<string, Event>();
+
+    // Add stored events first
+    for (const event of storedEvents) {
+      const key = `${event.time}_${event.type}`;
+      allEventsMap.set(key, event);
+    }
+
+    // Add/overwrite with new events
+    for (const event of newEvents) {
+      const key = `${event.time}_${event.type}`;
+      allEventsMap.set(key, event);
+    }
+
+    // Convert back to array and sort by time
+    const combinedEvents = Array.from(allEventsMap.values()).sort(
+      (a, b) => a.time - b.time
+    );
 
     this.view.webview.postMessage({
       type: "showEvents",
-      events: newEvents,
+      events: combinedEvents,
     });
   }
 

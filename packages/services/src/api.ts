@@ -19,6 +19,7 @@ export interface Event {
  * A service fetching events
  */
 export interface EventService {
+  readonly name: string;
   isSupported(): boolean;
   getEvents(eventNames?: EventType[], startDate?: Date): Promise<Event[]>;
 }

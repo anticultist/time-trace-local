@@ -55,6 +55,10 @@ export class WindowsEventsService implements EventService {
     (event) => event.eventName
   );
 
+  public get name(): string {
+    return "windows";
+  }
+
   public isSupported(): boolean {
     return process.platform === "win32";
   }

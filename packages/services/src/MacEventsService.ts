@@ -91,6 +91,10 @@ export class MacEventsService implements EventService {
     (event) => event.eventName
   );
 
+  public get name(): string {
+    return "mac";
+  }
+
   public isSupported(): boolean {
     return process.platform === "darwin";
   }
