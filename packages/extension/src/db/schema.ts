@@ -1,4 +1,4 @@
-import { int, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { int, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 export type PropertyValue = string | number;
 
@@ -26,9 +26,13 @@ export type EventType =
   | "standby_enter"
   | "standby_exit";
 
-export const events = sqliteTable("events", {
-  id: int().primaryKey({ autoIncrement: true }),
-  time: int({ mode: "timestamp" }).notNull(),
-  type: text().notNull().$type<EventType>(),
-  details: text().notNull(),
-});
+export const events = sqliteTable(
+  "events",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    time: int({ mode: "timestamp" }).notNull(),
+    type: text().notNull().$type<EventType>(),
+    details: text().notNull(),
+  },
+  (table) => [unique().on(table.time, table.type)]
+);
