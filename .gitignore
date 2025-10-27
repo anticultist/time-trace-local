@@ -1,6 +1,8 @@
 dist/
 node_modules/
 build/
+packages/extension/out/
+packages/extension/.vscode-test/
 
 vsc-extension-quickstart.md
 tsconfig.tsbuildinfo
