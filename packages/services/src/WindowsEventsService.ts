@@ -1,5 +1,5 @@
 import { execFile } from "child_process";
-import type { Event, EventService, EventType } from "./api";
+import type { Event, EventService, EventName } from "./api";
 
 /**
  * Raw event structure from PowerShell script output
@@ -51,20 +51,20 @@ export const WINDOWS_EVENTS = [
  * Service for querying Windows event logs
  */
 export class WindowsEventsService implements EventService {
-  private static readonly DEFAULT_EVENT_NAMES: EventType[] = WINDOWS_EVENTS.map(
+  private static readonly DEFAULT_EVENT_NAMES: EventName[] = WINDOWS_EVENTS.map(
     (event) => event.eventName
   );
 
   public get name(): string {
-    return "windows";
+    return "os";
   }
 
-  public isSupported(): boolean {
+  private isSupported(): boolean {
     return process.platform === "win32";
   }
 
   public async getEvents(
-    eventNames: EventType[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
+    eventNames: EventName[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
     startTime?: Date
   ): Promise<Event[]> {
     if (!this.isSupported()) {
@@ -119,17 +119,18 @@ export class WindowsEventsService implements EventService {
       })
       .map((rawEvent) => ({
         time: new Date(rawEvent.TimeCreated).getTime(),
-        type: this.getEventTypeName(rawEvent.Id, rawEvent.ProviderName),
+        source: this.name,
+        name: this.getEventTypeName(rawEvent.Id, rawEvent.ProviderName),
         details: `${rawEvent.ProviderName}: ${rawEvent.Message}`,
       }))
-      .filter((event): event is Event => event.type !== undefined)
+      .filter((event): event is Event => event.name !== undefined)
       .sort((a, b) => b.time - a.time);
   }
 
   private getEventTypeName(
     eventId: number,
     providerName: string
-  ): EventType | undefined {
+  ): EventName | undefined {
     const event = WINDOWS_EVENTS.find(
       (event) =>
         event.windowsEventId === eventId && event.providerName === providerName

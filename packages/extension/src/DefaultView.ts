@@ -138,7 +138,7 @@ export class DefaultView implements vscode.WebviewViewProvider {
           .where(
             and(
               eq(events.time, new Date(event.time)),
-              eq(events.type, event.type)
+              eq(events.name, event.name)
             )
           )
           .limit(1);
@@ -157,7 +157,8 @@ export class DefaultView implements vscode.WebviewViewProvider {
       await this.db.insert(events).values(
         uniqueEvents.map((event) => ({
           time: new Date(event.time),
-          type: event.type,
+          source: event.source,
+          name: event.name,
           details: event.details,
         }))
       );
@@ -231,17 +232,21 @@ export class DefaultView implements vscode.WebviewViewProvider {
     }
   }
 
-  private async getStoredEvents(startDate: Date): Promise<Event[]> {
+  private async getStoredEvents(
+    source: string,
+    startDate: Date
+  ): Promise<Event[]> {
     try {
       const storedEvents = await this.db
         .select()
         .from(events)
-        .where(gte(events.time, startDate))
+        .where(and(gte(events.time, startDate), eq(events.source, source)))
         .orderBy(events.time);
 
       return storedEvents.map((event) => ({
         time: event.time.getTime(),
-        type: event.type,
+        source: event.source,
+        name: event.name,
         details: event.details,
       }));
     } catch (error) {
@@ -270,7 +275,12 @@ export class DefaultView implements vscode.WebviewViewProvider {
       await this.saveLastFetchTime(service.name, mostRecentTimestamp);
     }
 
-    return newEvents;
+    // Get older events from database to fill gaps (max 7 days back)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const storedEvents = await this.getStoredEvents(service.name, sevenDaysAgo);
+
+    return [...storedEvents, ...newEvents].sort((a, b) => a.time - b.time);
   }
 
   private async sendEvents() {
@@ -281,41 +291,16 @@ export class DefaultView implements vscode.WebviewViewProvider {
     this.view.webview.postMessage({ type: "loadingEvents" });
 
     // Fetch new events from all services
-    const newEvents: Event[] = [];
+    const events: Event[] = [];
     await Promise.all(
       this.eventServices.map(async (service) => {
-        newEvents.push(...(await this.getEventsForService(service)));
+        events.push(...(await this.getEventsForService(service)));
       })
-    );
-
-    // Get older events from database to fill gaps (max 7 days back)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const storedEvents = await this.getStoredEvents(sevenDaysAgo);
-
-    // Combine stored events with new events and remove duplicates
-    const allEventsMap = new Map<string, Event>();
-
-    // Add stored events first
-    for (const event of storedEvents) {
-      const key = `${event.time}_${event.type}`;
-      allEventsMap.set(key, event);
-    }
-
-    // Add/overwrite with new events
-    for (const event of newEvents) {
-      const key = `${event.time}_${event.type}`;
-      allEventsMap.set(key, event);
-    }
-
-    // Convert back to array and sort by time
-    const combinedEvents = Array.from(allEventsMap.values()).sort(
-      (a, b) => a.time - b.time
     );
 
     this.view.webview.postMessage({
       type: "showEvents",
-      events: combinedEvents,
+      events,
     });
   }
 

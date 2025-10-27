@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import type { Event, EventService, EventType } from "./api";
+import type { Event, EventService, EventName } from "./api";
 
 /**
  * Raw event structure from macOS log show JSON output
@@ -87,20 +87,20 @@ export function runCommand(
  * Service for querying macOS unified logging system
  */
 export class MacEventsService implements EventService {
-  private static readonly DEFAULT_EVENT_NAMES: EventType[] = MAC_EVENTS.map(
+  private static readonly DEFAULT_EVENT_NAMES: EventName[] = MAC_EVENTS.map(
     (event) => event.eventName
   );
 
   public get name(): string {
-    return "mac";
+    return "os";
   }
 
-  public isSupported(): boolean {
+  private isSupported(): boolean {
     return process.platform === "darwin";
   }
 
   public async getEvents(
-    eventNames: EventType[] = MacEventsService.DEFAULT_EVENT_NAMES,
+    eventNames: EventName[] = MacEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
   ): Promise<Event[]> {
     if (!this.isSupported()) {
@@ -158,7 +158,7 @@ export class MacEventsService implements EventService {
 
   private async queryEvents(
     predicate: string,
-    eventType: EventType,
+    eventType: EventName,
     startDate: Date
   ): Promise<Event[]> {
     // Format date as YYYY-MM-DD HH:MM:SS for --start parameter
@@ -208,7 +208,7 @@ export class MacEventsService implements EventService {
 
   public convertRawEventsToEvents(
     rawEvents: RawMacEvent[],
-    eventType: EventType
+    eventName: EventName
   ): Event[] {
     if (!Array.isArray(rawEvents)) {
       return [];
@@ -217,7 +217,8 @@ export class MacEventsService implements EventService {
     return rawEvents
       .map((rawEvent) => ({
         time: new Date(rawEvent.timestamp).getTime(),
-        type: eventType,
+        source: this.name,
+        name: eventName,
         details: rawEvent.eventMessage || "No message",
       }))
       .sort((a, b) => b.time - a.time);

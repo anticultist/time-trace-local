@@ -18,7 +18,7 @@ export const dbProperties = sqliteTable("db_properties", {
 export type DbProperty = typeof dbProperties.$inferSelect;
 export type NewDbProperty = typeof dbProperties.$inferInsert;
 
-export type EventType =
+export type EventName =
   | "boot"
   | "shutdown"
   | "logon"
@@ -31,8 +31,9 @@ export const events = sqliteTable(
   {
     id: int().primaryKey({ autoIncrement: true }),
     time: int({ mode: "timestamp" }).notNull(),
-    type: text().notNull().$type<EventType>(),
+    source: text().notNull(),
+    name: text().notNull().$type<EventName>(),
     details: text().notNull(),
   },
-  (table) => [unique().on(table.time, table.type)]
+  (table) => [unique().on(table.time, table.name)]
 );

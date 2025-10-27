@@ -1,4 +1,4 @@
-export type EventType =
+export type EventName =
   | "boot"
   | "shutdown"
   | "logon"
@@ -11,7 +11,8 @@ export type EventType =
  */
 export interface Event {
   time: number;
-  type: EventType;
+  source: string;
+  name: EventName;
   details: string;
 }
 
@@ -20,6 +21,5 @@ export interface Event {
  */
 export interface EventService {
   readonly name: string;
-  isSupported(): boolean;
-  getEvents(eventNames?: EventType[], startDate?: Date): Promise<Event[]>;
+  getEvents(eventNames?: EventName[], startDate?: Date): Promise<Event[]>;
 }
