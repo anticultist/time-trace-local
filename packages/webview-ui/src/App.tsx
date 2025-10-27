@@ -167,7 +167,7 @@ export function App({ vscode }: AppProps) {
                 >
                   {dayEvents.map((event) => (
                     <div
-                      key={`${event.time}-${event.type}`}
+                      key={`${event.time}-${event.name}`}
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -195,7 +195,7 @@ export function App({ vscode }: AppProps) {
                           flex: 1,
                         }}
                       >
-                        {formatEventType(event.type)}
+                        {formatEventType(event.name)}
                       </span>
                       <VscodeIcon
                         name="info"

@@ -256,31 +256,36 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private async getEventsForService(service: EventService): Promise<Event[]> {
-    // Fetch last fetch time from db_properties per service and use as startDate
-    const lastFetchTime = await this.getLastFetchTime(service.name);
-    const startDate =
-      lastFetchTime ||
-      (() => {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        return sevenDaysAgo;
-      })();
-
-    const newEvents: Event[] = await service.getEvents(undefined, startDate);
-    await this.saveEventsToDatabase(newEvents);
-
-    // Save the timestamp of the most recent event retrieved
-    if (newEvents.length > 0) {
-      const mostRecentTimestamp = Math.max(...newEvents.map((e) => e.time));
-      await this.saveLastFetchTime(service.name, mostRecentTimestamp);
-    }
-
-    // Get older events from database to fill gaps (max 7 days back)
+    // Always fetch events from the last 7 days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const storedEvents = await this.getStoredEvents(service.name, sevenDaysAgo);
 
-    return [...storedEvents, ...newEvents].sort((a, b) => a.time - b.time);
+    // Get last fetch time to only fetch new events from the service
+    const lastFetchTime = await this.getLastFetchTime(service.name);
+    const fetchStartDate = lastFetchTime || sevenDaysAgo;
+
+    // Fetch new events from the service (only events after last fetch)
+    const newEvents: Event[] = await service.getEvents(
+      undefined,
+      fetchStartDate
+    );
+    console.log(`${service.name}: Fetched ${newEvents.length} new events`);
+
+    // Save new events to database
+    await this.saveEventsToDatabase(newEvents);
+
+    // Update last fetch time to now (not to the most recent event)
+    if (newEvents.length > 0) {
+      await this.saveLastFetchTime(service.name, Date.now());
+    }
+
+    // Return all events from the last 7 days from the database
+    const allEvents = await this.getStoredEvents(service.name, sevenDaysAgo);
+    console.log(
+      `${service.name}: Returning ${allEvents.length} total events from DB`
+    );
+
+    return allEvents;
   }
 
   private async sendEvents() {
