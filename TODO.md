@@ -82,17 +82,3 @@ export async function authenticate() {
   }
 }
 ```
-
-## Sleep / Wake up
-
-- Microsoft-Windows-Kernel-General
-  - KERNEL_BOOT: 12, // Kernel general events (OS boot)
-  - KERNEL_SHUTDOWN: 13, // Kernel general events (OS shutdown)
-- Microsoft-Windows-Kernel-Power
-  - KERNEL_POWER_SLEEP: 42, // System entering sleep/standby mode
-  - KERNEL_POWER_WAKE: 107, // System waking from sleep/standby mode
-- Microsoft-Windows-Power-Troubleshooter
-  - POWER_TROUBLESHOOTER_WAKE: 1, // Power troubleshooter wake event with details
-- Microsoft-Windows-Winlogon
-  - USER_LOGON: 7001, // User logon notification
-  - USER_LOGOFF: 7002, // User logoff notification

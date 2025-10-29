@@ -256,30 +256,27 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private async getEventsForService(service: EventService): Promise<Event[]> {
-    // Always fetch events from the last 7 days
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Get last fetch time to only fetch new events from the service
     const lastFetchTime = await this.getLastFetchTime(service.name);
     const fetchStartDate = lastFetchTime || sevenDaysAgo;
 
-    // Fetch new events from the service (only events after last fetch)
     const newEvents: Event[] = await service.getEvents(
       undefined,
       fetchStartDate
     );
     console.log(`${service.name}: Fetched ${newEvents.length} new events`);
 
-    // Save new events to database
     await this.saveEventsToDatabase(newEvents);
 
-    // Update last fetch time to now (not to the most recent event)
     if (newEvents.length > 0) {
-      await this.saveLastFetchTime(service.name, Date.now());
+      const mostRecentEvent = newEvents.reduce((latest, event) => {
+        return event.time > latest.time ? event : latest;
+      }, newEvents[0]);
+      await this.saveLastFetchTime(service.name, mostRecentEvent.time);
     }
 
-    // Return all events from the last 7 days from the database
     const allEvents = await this.getStoredEvents(service.name, sevenDaysAgo);
     console.log(
       `${service.name}: Returning ${allEvents.length} total events from DB`
@@ -295,7 +292,6 @@ export class DefaultView implements vscode.WebviewViewProvider {
 
     this.view.webview.postMessage({ type: "loadingEvents" });
 
-    // Fetch new events from all services
     const events: Event[] = [];
     await Promise.all(
       this.eventServices.map(async (service) => {
