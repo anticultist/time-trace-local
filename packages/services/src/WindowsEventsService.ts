@@ -59,7 +59,7 @@ export class WindowsEventsService implements EventService {
     return "os";
   }
 
-  private isSupported(): boolean {
+  public isActive(): boolean {
     return process.platform === "win32";
   }
 
@@ -67,7 +67,7 @@ export class WindowsEventsService implements EventService {
     eventNames: EventName[] = WindowsEventsService.DEFAULT_EVENT_NAMES,
     startTime?: Date
   ): Promise<Event[]> {
-    if (!this.isSupported()) {
+    if (!this.isActive()) {
       return [];
     }
 

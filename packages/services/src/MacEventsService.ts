@@ -95,7 +95,7 @@ export class MacEventsService implements EventService {
     return "os";
   }
 
-  private isSupported(): boolean {
+  public isActive(): boolean {
     return process.platform === "darwin";
   }
 
@@ -103,7 +103,7 @@ export class MacEventsService implements EventService {
     eventNames: EventName[] = MacEventsService.DEFAULT_EVENT_NAMES,
     startDate?: Date
   ): Promise<Event[]> {
-    if (!this.isSupported()) {
+    if (!this.isActive()) {
       return [];
     }
 

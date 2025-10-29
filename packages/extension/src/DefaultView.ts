@@ -256,6 +256,10 @@ export class DefaultView implements vscode.WebviewViewProvider {
   }
 
   private async getEventsForService(service: EventService): Promise<Event[]> {
+    if (!service.isActive()) {
+      return [];
+    }
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

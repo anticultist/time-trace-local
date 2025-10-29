@@ -21,5 +21,6 @@ export interface Event {
  */
 export interface EventService {
   readonly name: string;
+  isActive(): boolean;
   getEvents(eventNames?: EventName[], startDate?: Date): Promise<Event[]>;
 }
