@@ -126,31 +126,34 @@ export class MacEventsService implements EventService {
         return lastWeek;
       })();
 
-    const events: Event[] = [];
-
-    // Query each event type separately for better performance and accuracy
-    for (const eventName of eventNames) {
+    // Query all event types in parallel for better performance
+    const queryPromises = eventNames.map(async (eventName) => {
       const eventConfig = MAC_EVENTS.find((e) => e.eventName === eventName);
       if (!eventConfig) {
-        continue;
+        return [];
       }
 
       try {
-        // TODO: measure time taken for each query
         const eventResults = await this.queryEvents(
           eventConfig.predicate,
           eventName,
           date
         );
-        events.push(...eventResults);
+        return eventResults;
       } catch (err: any) {
         console.error(
           `Error querying macOS events for ${eventName}: ${
             err instanceof Error ? err.message : String(err)
           }`
         );
+        return [];
       }
-    }
+    });
+
+    // Wait for all queries to complete
+    const results = await Promise.all(queryPromises);
+
+    const events = results.flat();
 
     // Sort all events by time (most recent first)
     return events.sort((a, b) => b.time - a.time);
