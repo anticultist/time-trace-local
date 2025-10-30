@@ -13,6 +13,7 @@ export interface Event {
   time: number;
   source: string;
   name: EventName;
+  uri?: string;
   details: string;
 }
 

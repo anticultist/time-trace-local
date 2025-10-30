@@ -33,6 +33,7 @@ export const events = sqliteTable(
     time: int({ mode: "timestamp" }).notNull(),
     source: text().notNull(),
     name: text().notNull().$type<EventName>(),
+    uri: text(),
     details: text().notNull(),
   },
   (table) => [unique().on(table.time, table.name)]
