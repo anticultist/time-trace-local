@@ -69,6 +69,21 @@
           "icon": "media/logo.svg"
         }
       ]
+    },
+    "configuration": {
+      "title": "Time Trace Local",
+      "properties": {
+        "timeTraceLocal.jira.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Jira base URL (e.g., https://your-company.atlassian.net)"
+        },
+        "timeTraceLocal.jira.email": {
+          "type": "string",
+          "default": "",
+          "description": "Email address for Jira authentication"
+        }
+      }
     }
   },
   "scripts": {

@@ -7,7 +7,9 @@ export class ConfigurationManager {
   /**
    * Shows the main configuration quick pick to select which service to configure
    */
-  static async showConfigurationQuickPick(): Promise<void> {
+  static async showConfigurationQuickPick(
+    context: vscode.ExtensionContext
+  ): Promise<void> {
     const serviceOptions: vscode.QuickPickItem[] = [
       {
         label: "OS Events",
@@ -31,7 +33,7 @@ export class ConfigurationManager {
     if (selectedService.label === "OS Events") {
       await this.showOSEventsConfiguration();
     } else if (selectedService.label === "Jira") {
-      await this.showJiraConfiguration();
+      await this.showJiraConfiguration(context);
     }
   }
 
@@ -82,56 +84,53 @@ export class ConfigurationManager {
     quickPick.show();
   }
 
+  private static readonly jiraApiTokenKey = "timeTraceLocal.jira.apiToken";
+
   /**
    * Shows the Jira configuration UI with multi-step input
    */
-  private static async showJiraConfiguration(): Promise<void> {
-    // Step 1: Jira Base URL
-    const jiraBase = await vscode.window.showInputBox({
-      title: "Configure Jira - Step 1/3",
-      prompt: "Enter your Jira base URL",
-      placeHolder: "https://your-company.atlassian.net",
-      validateInput: (value) => {
-        if (!value || value.trim().length === 0) {
-          return "Jira base URL is required";
-        }
-        try {
-          new URL(value);
-          return null;
-        } catch {
-          return "Please enter a valid URL";
-        }
-      },
-    });
+  private static async showJiraConfiguration(
+    context: vscode.ExtensionContext
+  ): Promise<void> {
+    // Get base URL and email from VS Code configuration
+    const config = vscode.workspace.getConfiguration("timeTraceLocal.jira");
+    const jiraBase = config.get<string>("baseUrl");
+    const email = config.get<string>("email");
 
-    if (!jiraBase) {
-      return; // User cancelled
+    // Validate that base URL and email are configured
+    if (!jiraBase || jiraBase.trim().length === 0) {
+      const openSettings = "Open Settings";
+      const result = await vscode.window.showErrorMessage(
+        "Jira base URL is not configured. Please set it in your VS Code settings.",
+        openSettings
+      );
+      if (result === openSettings) {
+        await vscode.commands.executeCommand(
+          "workbench.action.openSettings",
+          "timeTraceLocal.jira.baseUrl"
+        );
+      }
+      return;
     }
 
-    // Step 2: Email
-    const email = await vscode.window.showInputBox({
-      title: "Configure Jira - Step 2/3",
-      prompt: "Enter your Jira email address",
-      placeHolder: "your-email@company.com",
-      validateInput: (value) => {
-        if (!value || value.trim().length === 0) {
-          return "Email is required";
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          return "Please enter a valid email address";
-        }
-        return null;
-      },
-    });
-
-    if (!email) {
-      return; // User cancelled
+    if (!email || email.trim().length === 0) {
+      const openSettings = "Open Settings";
+      const result = await vscode.window.showErrorMessage(
+        "Jira email is not configured. Please set it in your VS Code settings.",
+        openSettings
+      );
+      if (result === openSettings) {
+        await vscode.commands.executeCommand(
+          "workbench.action.openSettings",
+          "timeTraceLocal.jira.email"
+        );
+      }
+      return;
     }
 
-    // Step 3: API Token
+    // Prompt for API Token
     const apiToken = await vscode.window.showInputBox({
-      title: "Configure Jira - Step 3/3",
+      title: "Configure Jira - API Token",
       prompt: "Enter your Jira API token",
       placeHolder: "Your API token from Atlassian account settings",
       password: true,
@@ -147,25 +146,56 @@ export class ConfigurationManager {
       return; // User cancelled
     }
 
-    // Show configuration summary with masked values
-    const maskedJiraBase = jiraBase;
-    const maskedEmail = email;
-    const maskedApiToken = this.maskSensitiveValue(apiToken);
+    // Store the API token in secrets
+    try {
+      await context.secrets.store(
+        ConfigurationManager.jiraApiTokenKey,
+        apiToken
+      );
 
-    vscode.window.showInformationMessage(
-      `Jira configuration:\nBase: ${maskedJiraBase}\nEmail: ${maskedEmail}\nToken: ${maskedApiToken}`
-    );
+      vscode.window.showInformationMessage(
+        `Jira configuration saved successfully!\nBase URL: ${jiraBase}\nEmail: ${email}`
+      );
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Failed to save Jira API token: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 
   /**
-   * Masks sensitive values for display
-   * @param value The sensitive value to mask
-   * @returns The masked value
+   * Retrieves the complete Jira configuration
+   * @param context The extension context
+   * @returns The Jira configuration or null if incomplete
    */
-  private static maskSensitiveValue(value: string): string {
-    if (value.length <= 5) {
-      return "*".repeat(value.length);
+  static async getJiraConfig(context: vscode.ExtensionContext): Promise<{
+    baseUrl: string;
+    email: string;
+    apiToken: string;
+  } | null> {
+    const config = vscode.workspace.getConfiguration("timeTraceLocal.jira");
+    const baseUrl = config.get<string>("baseUrl");
+    const email = config.get<string>("email");
+    const apiToken = await context.secrets.get(
+      ConfigurationManager.jiraApiTokenKey
+    );
+
+    if (!baseUrl || !email || !apiToken) {
+      return null;
     }
-    return value.substring(0, 5) + "*".repeat(value.length - 5);
+
+    return { baseUrl, email, apiToken };
+  }
+
+  /**
+   * Checks if Jira is fully configured
+   * @param context The extension context
+   * @returns True if all Jira configuration is present
+   */
+  static async isJiraConfigured(
+    context: vscode.ExtensionContext
+  ): Promise<boolean> {
+    const config = await this.getJiraConfig(context);
+    return config !== null;
   }
 }

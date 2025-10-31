@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const configureCommand = vscode.commands.registerCommand(
     "timeTraceLocal.configure",
     async () => {
-      await ConfigurationManager.showConfigurationQuickPick();
+      await ConfigurationManager.showConfigurationQuickPick(context);
     }
   );
 
