@@ -3,13 +3,15 @@ import { drizzle, type LibSQLDatabase } from "drizzle-orm/libsql";
 import {
   WindowsEventsService,
   MacEventsService,
+  JiraEventsService,
   Event,
   EventService,
 } from "@time-trace-local/services";
 import { runMigrations } from "./db";
 import { events, dbProperties, PropertyType } from "./db/schema";
 import { and, eq, gte } from "drizzle-orm";
-import * as fs from "fs";
+import * as fs from "node:fs";
+import { ConfigurationManager } from "./ConfigurationManager";
 
 export class EventRepository {
   private readonly db: LibSQLDatabase;
@@ -20,7 +22,8 @@ export class EventRepository {
 
   constructor(
     private readonly globalStorageUri: vscode.Uri,
-    private readonly extensionUri: vscode.Uri
+    private readonly extensionUri: vscode.Uri,
+    private readonly context: vscode.ExtensionContext
   ) {
     // Ensure the globalStorage directory exists before creating the database
     const storageDir = this.globalStorageUri.fsPath;
@@ -36,12 +39,43 @@ export class EventRepository {
     try {
       await runMigrations(this.db, this.extensionUri);
       console.log("Database initialized successfully");
+
+      // Initialize Jira service if configured
+      await this.initializeJiraService();
     } catch (error) {
       console.error("Failed to initialize database:", error);
       vscode.window.showErrorMessage(
         `Failed to initialize Time Trace database: ${error instanceof Error ? error.message : String(error)}`
       );
       throw error;
+    }
+  }
+
+  private async initializeJiraService(): Promise<void> {
+    try {
+      const jiraConfig = await ConfigurationManager.getJiraConfig(this.context);
+
+      if (jiraConfig) {
+        const jiraService = new JiraEventsService(
+          jiraConfig.baseUrl,
+          jiraConfig.email,
+          jiraConfig.apiToken
+        );
+
+        // Remove any existing Jira service to avoid duplicates
+        const jiraIndex = this.eventServices.findIndex(
+          (service) => service.name === "jira"
+        );
+        if (jiraIndex !== -1) {
+          this.eventServices.splice(jiraIndex, 1);
+        }
+
+        this.eventServices.push(jiraService);
+        console.log("Jira Events Service initialized successfully");
+      }
+    } catch (error) {
+      console.error("Failed to initialize Jira service:", error);
+      // Don't throw - allow the app to continue without Jira
     }
   }
 

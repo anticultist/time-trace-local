@@ -16,20 +16,19 @@ export class DefaultView implements vscode.WebviewViewProvider {
   ) {}
 
   public static async getInstance(
-    extensionUri: vscode.Uri,
-    globalStorageUri: vscode.Uri,
-    extensionMode: vscode.ExtensionMode
+    context: vscode.ExtensionContext
   ): Promise<DefaultView> {
     if (!DefaultView.instance) {
       const eventRepository = new EventRepository(
-        globalStorageUri,
-        extensionUri
+        context.globalStorageUri,
+        context.extensionUri,
+        context
       );
       await eventRepository.initialize();
 
       DefaultView.instance = new DefaultView(
-        extensionUri,
-        extensionMode,
+        context.extensionUri,
+        context.extensionMode,
         eventRepository
       );
     }

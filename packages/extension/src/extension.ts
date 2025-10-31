@@ -11,11 +11,7 @@ export async function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "time-trace-local" is now active!'
   );
 
-  const defaultView = await DefaultView.getInstance(
-    context.extensionUri,
-    context.globalStorageUri,
-    context.extensionMode
-  );
+  const defaultView = await DefaultView.getInstance(context);
 
   const defaultViewProvider = vscode.window.registerWebviewViewProvider(
     DefaultView.viewType,
