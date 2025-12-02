@@ -33,6 +33,7 @@ export class EventRepository {
 
     const dbPath = vscode.Uri.joinPath(this.globalStorageUri, "events.db");
     this.db = drizzle({ connection: { url: `file:${dbPath.fsPath}` } });
+    console.log(`Database path: ${dbPath.fsPath}`);
   }
 
   public async initialize(): Promise<void> {
@@ -89,16 +90,33 @@ export class EventRepository {
     return events;
   }
 
-  private async saveEventsToDatabase(newEvents: Event[]): Promise<void> {
+  private async saveEventsToDatabase(newEvents: Event[]): Promise<boolean> {
     if (newEvents.length === 0) {
-      return;
+      return true;
     }
 
     try {
-      // Filter out duplicates by checking existing events with same time and type
-      const uniqueEvents: Event[] = [];
+      // First, filter duplicates within newEvents itself
+      // The unique constraint is on (time, name) where time is stored in seconds
+      // So we need to dedupe based on time (truncated to seconds) + name
+      const seenKeys = new Set<string>();
+      const dedupedEvents: Event[] = [];
 
       for (const event of newEvents) {
+        // Truncate to seconds to match how the database stores timestamps
+        const timeInSeconds = Math.floor(event.time / 1000);
+        const key = `${timeInSeconds}:${event.name}`;
+
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          dedupedEvents.push(event);
+        }
+      }
+
+      // Then filter out events that already exist in the database
+      const uniqueEvents: Event[] = [];
+
+      for (const event of dedupedEvents) {
         const existingEvent = await this.db
           .select()
           .from(events)
@@ -117,7 +135,7 @@ export class EventRepository {
 
       if (uniqueEvents.length === 0) {
         console.log("No new events to insert (all were duplicates)");
-        return;
+        return true;
       }
 
       // Insert all unique events in a batch
@@ -135,7 +153,9 @@ export class EventRepository {
       vscode.window.showErrorMessage(
         `Failed to save events: ${error instanceof Error ? error.message : String(error)}`
       );
+      return false;
     }
+    return true;
   }
 
   private async getLastFetchTime(
@@ -239,9 +259,9 @@ export class EventRepository {
     );
     console.log(`${service.name}: Fetched ${newEvents.length} new events`);
 
-    await this.saveEventsToDatabase(newEvents);
+    const saveSuccess = await this.saveEventsToDatabase(newEvents);
 
-    if (newEvents.length > 0) {
+    if (newEvents.length > 0 && saveSuccess) {
       const mostRecentEvent = newEvents.reduce((latest, event) => {
         return event.time > latest.time ? event : latest;
       }, newEvents[0]);
